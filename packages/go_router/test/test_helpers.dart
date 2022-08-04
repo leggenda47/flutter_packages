@@ -111,6 +111,20 @@ class GoRouterPushSpy extends GoRouter {
   }
 }
 
+class GoRouterPushAsyncSpy extends GoRouter {
+  GoRouterPushAsyncSpy({required List<GoRoute> routes}) : super(routes: routes);
+
+  String? myLocation;
+  Object? extra;
+
+  @override
+  Future<dynamic> pushAsync(String location, {Object? extra}) {
+    myLocation = location;
+    this.extra = extra;
+    return Future<bool>.value(true);
+  }
+}
+
 class GoRouterPushNamedSpy extends GoRouter {
   GoRouterPushNamedSpy({required List<GoRoute> routes}) : super(routes: routes);
 
@@ -130,20 +144,6 @@ class GoRouterPushNamedSpy extends GoRouter {
     this.params = params;
     this.queryParams = queryParams;
     this.extra = extra;
-  }
-}
-
-class GoRouterPushAsyncSpy extends GoRouter {
-  GoRouterPushAsyncSpy({required List<GoRoute> routes}) : super(routes: routes);
-
-  String? myLocation;
-  Object? extra;
-
-  @override
-  Future<dynamic> pushAsync(String location, {Object? extra}) {
-    myLocation = location;
-    this.extra = extra;
-    return Future<bool>.value(true);
   }
 }
 

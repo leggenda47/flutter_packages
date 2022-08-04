@@ -1621,7 +1621,7 @@ void main() {
           title: 'GoRouter Example',
         ),
       );
-      key.currentContext!.namedLocation(
+      key.currentContext?.namedLocation(
         name,
         params: params,
         queryParams: queryParams,
@@ -1641,7 +1641,7 @@ void main() {
           title: 'GoRouter Example',
         ),
       );
-      key.currentContext!.go(
+      key.currentContext?.go(
         location,
         extra: extra,
       );
@@ -1660,7 +1660,7 @@ void main() {
           title: 'GoRouter Example',
         ),
       );
-      key.currentContext!.goNamed(
+      key.currentContext?.goNamed(
         name,
         params: params,
         queryParams: queryParams,
@@ -1683,7 +1683,7 @@ void main() {
           title: 'GoRouter Example',
         ),
       );
-      key.currentContext!.push(
+      key.currentContext?.push(
         location,
         extra: extra,
       );
@@ -1702,11 +1702,11 @@ void main() {
           title: 'GoRouter Example',
         ),
       );
-      final bool? result = await key.currentContext!.pushAsync(
+      final String? result = await key.currentContext?.pushAsync<String>(
         location,
         extra: extra,
-      ) as bool?;
-      expect(result, true);
+      );
+      expect(result, extra);
       expect(router.myLocation, location);
       expect(router.extra, extra);
     });
@@ -1722,7 +1722,7 @@ void main() {
           title: 'GoRouter Example',
         ),
       );
-      key.currentContext!.pushNamed(
+      key.currentContext?.pushNamed(
         name,
         params: params,
         queryParams: queryParams,
@@ -1746,17 +1746,17 @@ void main() {
           title: 'GoRouter Example',
         ),
       );
-      final bool? result = await key.currentContext!.pushNamedAsync(
+      final String? result = await key.currentContext?.pushNamedAsync<String>(
         name,
         params: params,
         queryParams: queryParams,
         extra: extra,
-      ) as bool?;
-      expect(result, true);
+      );
+      expect(result, extra);
+      expect(router.extra, extra);
       expect(router.name, name);
       expect(router.params, params);
       expect(router.queryParams, queryParams);
-      expect(router.extra, extra);
     });
 
     testWidgets('calls [pop] on closest GoRouter', (WidgetTester tester) async {
@@ -1769,7 +1769,7 @@ void main() {
           title: 'GoRouter Example',
         ),
       );
-      key.currentContext!.pop();
+      key.currentContext?.pop();
       expect(router.popped, true);
     });
   });

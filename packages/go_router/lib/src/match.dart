@@ -5,83 +5,116 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 
-import 'matching.dart';
 import 'path_utils.dart';
 import 'route.dart';
 
-///  An instance of a GoRoute plus information about the current location.
+/// Each RouteMatch instance represents an instance of a GoRoute for a specific
+/// portion of a location.
 class RouteMatch {
-  /// Constructor for [RouteMatch].
+  /// Constructor for [RouteMatch], each instance represents an instance of a
+  /// [GoRoute] for a specific portion of a location.
   RouteMatch({
     required this.route,
     required this.subloc,
-    required this.extra,
+    required this.fullpath,
+    required this.encodedParams,
+    required this.queryParams,
     required this.completer,
+    required this.extra,
     required this.error,
-    required this.pageKey,
-  });
+    this.pageKey,
+  })  : fullUriString = _addQueryParams(subloc, queryParams),
+        assert(subloc.startsWith('/')),
+        assert(Uri.parse(subloc).queryParameters.isEmpty),
+        assert(fullpath.startsWith('/')),
+        assert(Uri.parse(fullpath).queryParameters.isEmpty),
+        assert(() {
+          for (final MapEntry<String, String> p in encodedParams.entries) {
+            assert(p.value == Uri.encodeComponent(Uri.decodeComponent(p.value)),
+                'encodedParams[${p.key}] is not encoded properly: "${p.value}"');
+          }
+          return true;
+        }());
 
   // ignore: public_member_api_docs
   static RouteMatch? match({
-    required RouteBase route,
+    required GoRoute route,
     required String restLoc, // e.g. person/p1
     required String parentSubloc, // e.g. /family/f2
-    required Map<String, String> pathParameters,
-    Completer<dynamic>? completer,
+    required String fullpath, // e.g. /family/:fid/person/:pid
+    required Map<String, String> queryParams,
+    required Completer<dynamic> completer,
     required Object? extra,
   }) {
-    if (route is ShellRoute) {
-      return RouteMatch(
-        route: route,
-        subloc: restLoc,
-        extra: extra,
-        completer: completer,
-        error: null,
-        pageKey: ValueKey<String>(route.hashCode.toString()),
-      );
-    } else if (route is GoRoute) {
-      assert(!route.path.contains('//'));
+    assert(!route.path.contains('//'));
 
-      final RegExpMatch? match = route.matchPatternAsPrefix(restLoc);
-      if (match == null) {
-        return null;
-      }
-
-      final Map<String, String> encodedParams = route.extractPathParams(match);
-      for (final MapEntry<String, String> param in encodedParams.entries) {
-        pathParameters[param.key] = Uri.decodeComponent(param.value);
-      }
-      final String pathLoc = patternToPath(route.path, encodedParams);
-      final String subloc = concatenatePaths(parentSubloc, pathLoc);
-      return RouteMatch(
-        route: route,
-        subloc: subloc,
-        extra: extra,
-        completer: completer,
-        error: null,
-        pageKey: ValueKey<String>(route.hashCode.toString()),
-      );
+    final RegExpMatch? match = route.matchPatternAsPrefix(restLoc);
+    if (match == null) {
+      return null;
     }
-    throw MatcherError('Unexpected route type: $route', restLoc);
+
+    final Map<String, String> encodedParams = route.extractPathParams(match);
+    final String pathLoc = patternToPath(route.path, encodedParams);
+    final String subloc = concatenatePaths(parentSubloc, pathLoc);
+    return RouteMatch(
+      route: route,
+      subloc: subloc,
+      fullpath: fullpath,
+      encodedParams: encodedParams,
+      queryParams: queryParams,
+      completer: completer,
+      extra: extra,
+      error: null,
+    );
   }
 
   /// The matched route.
-  final RouteBase route;
+  final GoRoute route;
 
-  /// The matched location.
+  /// Matched sub-location.
   final String subloc; // e.g. /family/f2
+
+  /// Matched full path.
+  final String fullpath; // e.g. /family/:fid
+
+  /// Parameters for the matched route, URI-encoded.
+  final Map<String, String> encodedParams;
+
+  /// Query parameters for the matched route.
+  final Map<String, String> queryParams;
+
+  /// The completer for the promise when pushing routes.
+  final Completer<dynamic> completer;
 
   /// An extra object to pass along with the navigation.
   final Object? extra;
-
-  /// The completer for the promise when pushing routes.
-  final Completer<dynamic>? completer;
 
   /// An exception if there was an error during matching.
   final Exception? error;
 
   /// Optional value key of type string, to hold a unique reference to a page.
-  final ValueKey<String> pageKey;
+  final ValueKey<String>? pageKey;
+
+  /// The full uri string
+  final String fullUriString; // e.g. /family/12?query=14
+
+  static String _addQueryParams(String loc, Map<String, String> queryParams) {
+    final Uri uri = Uri.parse(loc);
+    assert(uri.queryParameters.isEmpty);
+    return Uri(
+            path: uri.path,
+            queryParameters: queryParams.isEmpty ? null : queryParams)
+        .toString();
+  }
+
+  /// Parameters for the matched route, URI-decoded.
+  Map<String, String> get decodedParams => <String, String>{
+        for (final MapEntry<String, String> param in encodedParams.entries)
+          param.key: Uri.decodeComponent(param.value)
+      };
+
+  /// For use by the Router architecture as part of the RouteMatch
+  @override
+  String toString() => 'RouteMatch($fullpath, $encodedParams)';
 }

@@ -1,3 +1,6 @@
+## 1.0.15
+
+* Updated to element2
 ## 1.0.14
 
 * Bumps go_router version in example folder to v5.0.0
@@ -17,7 +20,7 @@
 
 ## 1.0.10
 
-* Adds a lint ignore for deprecated member in the example. 
+* Adds a lint ignore for deprecated member in the example.
 
 ## 1.0.9
 

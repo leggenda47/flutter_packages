@@ -98,9 +98,10 @@ class GoRouterPushSpy extends GoRouter {
   Object? extra;
 
   @override
-  void push(String location, {Object? extra}) {
+  Future<T?> push<T extends Object?>(String location, {Object? extra}) {
     myLocation = location;
     this.extra = extra;
+    return Future<T?>.value(extra as T?);
   }
 }
 
@@ -113,7 +114,7 @@ class GoRouterPushNamedSpy extends GoRouter {
   Object? extra;
 
   @override
-  void pushNamed(
+  Future<T?> pushNamed<T extends Object?>(
     String name, {
     Map<String, String> params = const <String, String>{},
     Map<String, dynamic> queryParams = const <String, dynamic>{},
@@ -123,6 +124,7 @@ class GoRouterPushNamedSpy extends GoRouter {
     this.params = params;
     this.queryParams = queryParams;
     this.extra = extra;
+    return Future<T?>.value(extra as T?);
   }
 }
 
@@ -132,7 +134,7 @@ class GoRouterPopSpy extends GoRouter {
   bool popped = false;
 
   @override
-  void pop() {
+  void pop<T extends Object?>([T? value]) {
     popped = true;
   }
 }
@@ -343,13 +345,19 @@ class DummyStatefulWidget extends StatefulWidget {
 }
 
 class DummyStatefulWidgetState extends State<DummyStatefulWidget> {
+  int counter = 0;
+
+  void increment() => setState(() {
+        counter++;
+      });
+
   @override
   Widget build(BuildContext context) => Container();
 }
 
-Future<void> simulateAndroidBackButton() async {
+Future<void> simulateAndroidBackButton(WidgetTester tester) async {
   final ByteData message =
       const JSONMethodCodec().encodeMethodCall(const MethodCall('popRoute'));
-  await ServicesBinding.instance.defaultBinaryMessenger
+  await tester.binding.defaultBinaryMessenger
       .handlePlatformMessage('flutter/navigation', message, (_) {});
 }

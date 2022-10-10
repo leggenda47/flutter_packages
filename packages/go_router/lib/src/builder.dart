@@ -9,6 +9,7 @@ import 'logging.dart';
 import 'match.dart';
 import 'matching.dart';
 import 'misc/error_screen.dart';
+import 'misc/stateful_navigation_shell.dart';
 import 'pages/cupertino.dart';
 import 'pages/custom_transition_page.dart';
 import 'pages/material.dart';
@@ -127,7 +128,7 @@ class RouteBuilder {
     }
   }
 
-  void _buildRecursive(
+  GoRouterState? _buildRecursive(
     BuildContext context,
     RouteMatchList matchList,
     int startIndex,
@@ -138,7 +139,7 @@ class RouteBuilder {
     GlobalKey<NavigatorState> navigatorKey,
   ) {
     if (startIndex >= matchList.matches.length) {
-      return;
+      return null;
     }
     final RouteMatch match = matchList.matches[startIndex];
 
@@ -163,33 +164,68 @@ class RouteBuilder {
 
       keyToPages.putIfAbsent(goRouteNavKey, () => <Page<dynamic>>[]).add(page);
 
-      _buildRecursive(context, matchList, startIndex + 1, pop, routerNeglect,
-          keyToPages, newParams, navigatorKey);
-    } else if (route is ShellRoute) {
+      return _buildRecursive(context, matchList, startIndex + 1, pop,
+              routerNeglect, keyToPages, newParams, navigatorKey) ??
+          state;
+    } else if (route is ShellRouteBase) {
+      if (startIndex + 1 >= matchList.matches.length) {
+        throw _RouteBuilderError('Shell routes must always have child routes');
+      }
+
       // The key for the Navigator that will display this ShellRoute's page.
       final GlobalKey<NavigatorState> parentNavigatorKey = navigatorKey;
 
-      // The key to provide to the ShellRoute's Navigator.
-      final GlobalKey<NavigatorState> shellNavigatorKey = route.navigatorKey;
-
       // Add an entry for the parent navigator if none exists.
       keyToPages.putIfAbsent(parentNavigatorKey, () => <Page<dynamic>>[]);
-
-      // Add an entry for the shell route's navigator
-      keyToPages.putIfAbsent(shellNavigatorKey, () => <Page<dynamic>>[]);
 
       // Calling _buildRecursive can result in adding pages to the
       // parentNavigatorKey entry's list. Store the current length so
       // that the page for this ShellRoute is placed at the right index.
       final int shellPageIdx = keyToPages[parentNavigatorKey]!.length;
 
-      // Build the remaining pages
-      _buildRecursive(context, matchList, startIndex + 1, pop, routerNeglect,
-          keyToPages, newParams, shellNavigatorKey);
+      // Get the current child route of this shell route from the match list.
+      final RouteBase childRoute = matchList.matches[startIndex + 1].route;
 
-      // Build the Navigator
-      final Widget child = _buildNavigator(
+      // The key to provide to the shell route's Navigator.
+      final GlobalKey<NavigatorState>? shellNavigatorKey =
+          route.navigatorKeyForChildRoute(childRoute);
+      if (shellNavigatorKey == null) {
+        throw _RouteBuilderError(
+            'Shell routes must always have a navigator key');
+      }
+
+      // Add an entry for the shell route's navigator
+      keyToPages.putIfAbsent(shellNavigatorKey, () => <Page<dynamic>>[]);
+
+      // Build the remaining pages and retrieve the state for the top of the
+      // navigation stack
+      final GoRouterState? topRouterState = _buildRecursive(
+        context,
+        matchList,
+        startIndex + 1,
+        pop,
+        routerNeglect,
+        keyToPages,
+        newParams,
+        shellNavigatorKey,
+      );
+
+      Widget child = _buildNavigator(
           pop, keyToPages[shellNavigatorKey]!, shellNavigatorKey);
+
+      if (route is StatefulShellRoute) {
+        if (topRouterState == null) {
+          throw _RouteBuilderError('StatefulShellRoute cannot be at the top of '
+              'the navigation stack');
+        }
+
+        child = _buildStatefulNavigationShell(
+          shellRoute: route,
+          navigator: child as Navigator,
+          shellRouterState: state,
+          topRouterState: topRouterState,
+        );
+      }
 
       // Build the Page for this route
       final Page<dynamic> page =
@@ -199,7 +235,10 @@ class RouteBuilder {
       keyToPages
           .putIfAbsent(parentNavigatorKey, () => <Page<dynamic>>[])
           .insert(shellPageIdx, page);
+
+      return topRouterState;
     }
+    return null;
   }
 
   Navigator _buildNavigator(
@@ -220,6 +259,21 @@ class RouteBuilder {
         pop();
         return true;
       },
+    );
+  }
+
+  StatefulNavigationShell _buildStatefulNavigationShell({
+    required StatefulShellRoute shellRoute,
+    required Navigator navigator,
+    required GoRouterState shellRouterState,
+    required GoRouterState topRouterState,
+  }) {
+    return StatefulNavigationShell(
+      configuration: configuration,
+      shellRoute: shellRoute,
+      activeNavigator: navigator,
+      shellRouterState: shellRouterState,
+      topRouterState: topRouterState,
     );
   }
 
@@ -263,6 +317,12 @@ class RouteBuilder {
       if (pageBuilder != null) {
         page = pageBuilder(context, state);
       }
+    } else if (route is StatefulShellRoute) {
+      final ShellRoutePageBuilder? pageForShell = route.pageProvider;
+      assert(child != null, 'StatefulShellRoute must contain a child route');
+      if (pageForShell != null) {
+        page = pageForShell(context, state, child!);
+      }
     } else if (route is ShellRoute) {
       final ShellRoutePageBuilder? pageBuilder = route.pageBuilder;
       assert(child != null, 'ShellRoute must contain a child route');
@@ -299,19 +359,25 @@ class RouteBuilder {
       }
 
       return builder(context, state);
-    } else if (route is ShellRoute) {
+    } else if (route is ShellRouteBase) {
       if (childWidget == null) {
         throw _RouteBuilderException(
             'Attempt to build ShellRoute without a child widget');
       }
 
-      final ShellRouteBuilder? builder = route.builder;
+      if (route is StatefulShellRoute) {
+        // StatefulShellRoute builder will already have been called at this
+        // point, to create childWidget
+        return childWidget;
+      } else if (route is ShellRoute) {
+        final ShellRouteBuilder? builder = route.builder;
 
-      if (builder == null) {
-        throw _RouteBuilderError('No builder provided to ShellRoute: $route');
+        if (builder == null) {
+          throw _RouteBuilderError('No builder provided to ShellRoute: $route');
+        }
+
+        return builder(context, state, childWidget);
       }
-
-      return builder(context, state, childWidget);
     }
 
     throw _RouteBuilderException('Unsupported route type $route');

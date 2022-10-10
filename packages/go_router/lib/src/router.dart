@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 
 import 'configuration.dart';
@@ -178,37 +180,48 @@ class GoRouter extends ChangeNotifier
         extra: extra,
       );
 
-  /// Push a URI location onto the page stack w/ optional query parameters, e.g.
-  /// `/family/f2/person/p1?color=blue`
-  void push(String location, {Object? extra}) {
+  /// Push a URI location onto the page stack w/ optional query parameters
+  /// and promise, e.g. `/family/f2/person/p1?color=blue`.
+  Future<T?> push<T extends Object?>(String location, {Object? extra}) async {
     assert(() {
       log.info('pushing $location');
       return true;
     }());
-    _routeInformationParser
-        .parseRouteInformationWithDependencies(
+    final RouteMatchList matchList =
+        await _routeInformationParser.parseRouteInformationWithDependencies(
       DebugGoRouteInformation(location: location, state: extra),
       // TODO(chunhtai): avoid accessing the context directly through global key.
       // https://github.com/flutter/flutter/issues/99112
       _routerDelegate.navigatorKey.currentContext!,
-    )
-        .then<void>((RouteMatchList matches) {
-      _routerDelegate.push(matches.last);
-    });
+    );
+
+    return _routerDelegate.push<T?>(matchList.last);
   }
 
-  /// Push a named route onto the page stack w/ optional parameters, e.g.
-  /// `name='person', params={'fid': 'f2', 'pid': 'p1'}`
-  void pushNamed(
+  /// Push a named route asynchronously onto the page stack w/ optional
+  /// parameters and promise.
+  Future<T?> pushNamed<T extends Object?>(
     String name, {
     Map<String, String> params = const <String, String>{},
     Map<String, dynamic> queryParams = const <String, dynamic>{},
     Object? extra,
   }) =>
-      push(
+      push<T?>(
         namedLocation(name, params: params, queryParams: queryParams),
         extra: extra,
       );
+
+  /// Returns `true` if there is more than 1 page on the stack.
+  bool canPop() => _routerDelegate.canPop();
+
+  /// Pop the top page off the GoRouter's page stack.
+  void pop<T extends Object?>([T? result]) {
+    assert(() {
+      log.info('popping $location');
+      return true;
+    }());
+    routerDelegate.pop(result);
+  }
 
   /// Replaces the top-most page of the page stack with the given URL location
   /// w/ optional query parameters, e.g. `/family/f2/person/p1?color=blue`.
@@ -216,17 +229,17 @@ class GoRouter extends ChangeNotifier
   /// See also:
   /// * [go] which navigates to the location.
   /// * [push] which pushes the location onto the page stack.
-  void replace(String location, {Object? extra}) {
-    routeInformationParser
-        .parseRouteInformationWithDependencies(
+  Future<T?> replace<T extends Object?>(String location,
+      {Object? extra}) async {
+    final RouteMatchList matchList =
+        await routeInformationParser.parseRouteInformationWithDependencies(
       DebugGoRouteInformation(location: location, state: extra),
       // TODO(chunhtai): avoid accessing the context directly through global key.
       // https://github.com/flutter/flutter/issues/99112
       _routerDelegate.navigatorKey.currentContext!,
-    )
-        .then<void>((RouteMatchList matchList) {
-      routerDelegate.replace(matchList.matches.last);
-    });
+    );
+
+    return routerDelegate.replace<T?>(matchList.matches.last);
   }
 
   /// Replaces the top-most page of the page stack with the named route w/
@@ -236,29 +249,16 @@ class GoRouter extends ChangeNotifier
   /// See also:
   /// * [goNamed] which navigates a named route.
   /// * [pushNamed] which pushes a named route onto the page stack.
-  void replaceNamed(
+  Future<T?> replaceNamed<T extends Object?>(
     String name, {
     Map<String, String> params = const <String, String>{},
     Map<String, dynamic> queryParams = const <String, dynamic>{},
     Object? extra,
-  }) {
-    replace(
-      namedLocation(name, params: params, queryParams: queryParams),
-      extra: extra,
-    );
-  }
-
-  /// Returns `true` if there is more than 1 page on the stack.
-  bool canPop() => _routerDelegate.canPop();
-
-  /// Pop the top page off the GoRouter's page stack.
-  void pop() {
-    assert(() {
-      log.info('popping $location');
-      return true;
-    }());
-    _routerDelegate.pop();
-  }
+  }) =>
+      replace<T?>(
+        namedLocation(name, params: params, queryParams: queryParams),
+        extra: extra,
+      );
 
   /// Refresh the route.
   void refresh() {

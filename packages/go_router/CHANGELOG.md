@@ -1,3 +1,27 @@
+## 5.1.0
+
+- Adds a Future option to `push` and `pushNamed` making it posible to await results from a `pop`.
+- Adds an optional parameter to the `pop` method, allowing to return values from a `pop`.
+- Introduced a new shell route class called `PartitionedShellRoute`, to support using separate
+  navigators for child routes as well as preserving state in each navigation tree  
+  (flutter/flutter#99124). Also introduced the supporting widget class `StackedNavigationShell`,
+  which facilitates using an `IndexStack` to manage multiple parallel navigation trees.
+- Updated documentation for `pageBuilder` and `builder` fields of `ShellRoute`, to more correctly
+  describe the meaning of the child argument in the builder functions.
+
+## 5.0.5
+
+- Fixes issue where asserts in popRoute were preventing the app from
+  exiting on Android.
+
+## 5.0.4
+
+- Fixes a bug in ShellRoute example where NavigationBar might lose current index in a nested routes.
+
+## 5.0.3
+
+- Changes examples to use the routerConfig API
+
 ## 5.0.2
 
 - Fixes missing code example in ShellRoute documentation.
@@ -10,7 +34,7 @@
 
 - Fixes a bug where intermediate route redirect methods are not called.
 - GoRouter implements the RouterConfig interface, allowing you to call
-  MaterialApp.router(routerConfig: _myGoRouter) instead of passing
+  MaterialApp.router(routerConfig: \_myGoRouter) instead of passing
   the RouterDelegate, RouteInformationParser, and RouteInformationProvider
   fields.
 - **BREAKING CHANGE**
@@ -42,12 +66,12 @@
 
 ## 4.3.0
 
-- Allows `Map<String, dynamic>` maps as `queryParams` of `goNamed`, `replacedName`, `pushNamed` and `namedLocation`. 
+- Allows `Map<String, dynamic>` maps as `queryParams` of `goNamed`, `replacedName`, `pushNamed` and `namedLocation`.
 
 ## 4.2.9
 
-* Updates text theme parameters to avoid deprecation issues.
-* Fixes lint warnings.
+- Updates text theme parameters to avoid deprecation issues.
+- Fixes lint warnings.
 
 ## 4.2.8
 

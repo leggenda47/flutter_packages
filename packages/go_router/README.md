@@ -166,6 +166,20 @@ methods:
 onTap: () => context.go('/page2')
 ```
 
+
+To wait for values when the screen pops:
+
+```dart
+onTap: () {
+  // In the new page you can do 'context.pop<bool>(someValue)' to return a value.
+  final bool? result = await context.push<bool>('/page2');
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if(result ?? false)...
+  });
+}
+```
+
 ## Nested Navigation
 
 The `ShellRoute` route type provides a way to wrap all sub-routes with a UI shell.
@@ -204,7 +218,7 @@ final  _router = GoRouter(
 For more details, see the
 [ShellRoute](https://pub.dev/documentation/go_router/latest/go_router/ShellRoute-class.html)
 API documentation. For a complete
-example, see the 
+example, see the
 [ShellRoute sample](https://github.com/flutter/packages/tree/main/packages/go_router/example/lib/shell_route.dart)
 in the example/ directory.
 

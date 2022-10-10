@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -18,6 +20,7 @@ class RouteMatch {
     required this.fullpath,
     required this.encodedParams,
     required this.queryParams,
+    this.completer,
     required this.queryParametersAll,
     required this.extra,
     required this.error,
@@ -40,10 +43,11 @@ class RouteMatch {
     required String parentSubloc, // e.g. /family/f2
     required String fullpath, // e.g. /family/:fid/person/:pid
     required Map<String, String> queryParams,
+    Completer<dynamic>? completer,
     required Map<String, List<String>> queryParametersAll,
     required Object? extra,
   }) {
-    if (route is ShellRoute) {
+    if (route is ShellRouteBase) {
       return RouteMatch(
         route: route,
         subloc: restLoc,
@@ -52,6 +56,7 @@ class RouteMatch {
         queryParams: queryParams,
         queryParametersAll: queryParametersAll,
         extra: extra,
+        completer: completer,
         error: null,
         // Provide a unique pageKey to ensure that the page for this ShellRoute is
         // reused.
@@ -73,6 +78,7 @@ class RouteMatch {
         subloc: subloc,
         fullpath: fullpath,
         encodedParams: encodedParams,
+        completer: completer,
         queryParams: queryParams,
         queryParametersAll: queryParametersAll,
         extra: extra,
@@ -109,6 +115,9 @@ class RouteMatch {
   /// * [queryParametersAll] that can provide a map that maps keys to all of
   ///   their values.
   final Map<String, String> queryParams;
+
+  /// The completer for the promise when pushing routes.
+  final Completer<dynamic>? completer;
 
   /// Returns the URI query split into a map according to the rules specified
   /// for FORM post in the [HTML 4.01 specification section

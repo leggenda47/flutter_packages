@@ -81,6 +81,104 @@ void main() {
     });
 
     test(
+        'throws when StatefulShellRoute is missing a navigator key for a '
+        'child route', () {
+      final GlobalKey<NavigatorState> root =
+          GlobalKey<NavigatorState>(debugLabel: 'root');
+      final GlobalKey<NavigatorState> keyA =
+          GlobalKey<NavigatorState>(debugLabel: 'A');
+      final List<GoRoute> shellRouteChildren = <GoRoute>[
+        GoRoute(
+            path: '/a', builder: _mockScreenBuilder, parentNavigatorKey: keyA),
+        GoRoute(path: '/b', builder: _mockScreenBuilder),
+      ];
+      expect(
+        () {
+          RouteConfiguration(
+            navigatorKey: root,
+            routes: <RouteBase>[
+              StatefulShellRoute.rootRoutes(
+                  routes: shellRouteChildren, builder: _mockShellBuilder),
+            ],
+            redirectLimit: 10,
+            topRedirect: (BuildContext context, GoRouterState state) {
+              return null;
+            },
+          );
+        },
+        throwsAssertionError,
+      );
+    });
+
+    test('throws when StatefulShellRoute has duplicate navigator keys', () {
+      final GlobalKey<NavigatorState> root =
+          GlobalKey<NavigatorState>(debugLabel: 'root');
+      final GlobalKey<NavigatorState> keyA =
+          GlobalKey<NavigatorState>(debugLabel: 'A');
+      final List<GoRoute> shellRouteChildren = <GoRoute>[
+        GoRoute(
+            path: '/a', builder: _mockScreenBuilder, parentNavigatorKey: keyA),
+        GoRoute(
+            path: '/b', builder: _mockScreenBuilder, parentNavigatorKey: keyA),
+      ];
+      expect(
+        () {
+          RouteConfiguration(
+            navigatorKey: root,
+            routes: <RouteBase>[
+              StatefulShellRoute.rootRoutes(
+                  routes: shellRouteChildren, builder: _mockShellBuilder),
+            ],
+            redirectLimit: 10,
+            topRedirect: (BuildContext context, GoRouterState state) {
+              return null;
+            },
+          );
+        },
+        throwsAssertionError,
+      );
+    });
+
+    test(
+        'throws when a child of StatefulShellRoute has an incorrect '
+        'parentNavigatorKey', () {
+      final GlobalKey<NavigatorState> root =
+          GlobalKey<NavigatorState>(debugLabel: 'root');
+      final GlobalKey<NavigatorState> sectionANavigatorKey =
+          GlobalKey<NavigatorState>();
+      final GlobalKey<NavigatorState> sectionBNavigatorKey =
+          GlobalKey<NavigatorState>();
+      final GoRoute routeA = GoRoute(
+          path: '/a',
+          builder: _mockScreenBuilder,
+          parentNavigatorKey: sectionBNavigatorKey);
+      final GoRoute routeB = GoRoute(
+          path: '/b',
+          builder: _mockScreenBuilder,
+          parentNavigatorKey: sectionANavigatorKey);
+      expect(
+        () {
+          RouteConfiguration(
+            navigatorKey: root,
+            routes: <RouteBase>[
+              StatefulShellRoute(branches: <ShellRouteBranch>[
+                ShellRouteBranch(
+                    rootRoute: routeA, navigatorKey: sectionANavigatorKey),
+                ShellRouteBranch(
+                    rootRoute: routeB, navigatorKey: sectionBNavigatorKey),
+              ], builder: _mockShellBuilder),
+            ],
+            redirectLimit: 10,
+            topRedirect: (BuildContext context, GoRouterState state) {
+              return null;
+            },
+          );
+        },
+        throwsAssertionError,
+      );
+    });
+
+    test(
         'throws when there is a GoRoute ancestor with a different parentNavigatorKey',
         () {
       final GlobalKey<NavigatorState> root =
@@ -454,6 +552,93 @@ void main() {
       throwsAssertionError,
     );
   });
+
+  test(
+    'Reports correct full path for route',
+    () {
+      final GoRoute routeC1 = GoRoute(
+        path: 'c1',
+        builder: _mockScreenBuilder,
+      );
+      final GoRoute routeY2 =
+          GoRoute(path: 'y2', builder: _mockScreenBuilder, routes: <GoRoute>[
+        GoRoute(
+          path: 'z2',
+          builder: _mockScreenBuilder,
+        ),
+      ]);
+      final GoRoute routeZ1 = GoRoute(
+        path: 'z1/:param',
+        builder: _mockScreenBuilder,
+      );
+      final RouteConfiguration config = RouteConfiguration(
+        navigatorKey: GlobalKey<NavigatorState>(debugLabel: 'root'),
+        routes: <RouteBase>[
+          ShellRoute(
+            routes: <RouteBase>[
+              GoRoute(
+                path: '/',
+                builder: _mockScreenBuilder,
+                routes: <RouteBase>[
+                  GoRoute(
+                    path: 'a',
+                    builder: _mockScreenBuilder,
+                    routes: <RouteBase>[
+                      ShellRoute(
+                        routes: <RouteBase>[
+                          GoRoute(
+                            path: 'b1',
+                            builder: _mockScreenBuilder,
+                            routes: <RouteBase>[
+                              routeC1,
+                            ],
+                          ),
+                          GoRoute(
+                            path: 'b2',
+                            builder: _mockScreenBuilder,
+                            routes: <RouteBase>[
+                              GoRoute(
+                                path: 'c2',
+                                builder: _mockScreenBuilder,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  GoRoute(
+                    path: 'x',
+                    builder: _mockScreenBuilder,
+                    routes: <RouteBase>[
+                      ShellRoute(
+                        routes: <RouteBase>[
+                          GoRoute(
+                            path: 'y1',
+                            builder: _mockScreenBuilder,
+                            routes: <RouteBase>[routeZ1],
+                          ),
+                          routeY2,
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+        redirectLimit: 10,
+        topRedirect: (BuildContext context, GoRouterState state) {
+          return null;
+        },
+      );
+
+      expect('/a/b1/c1', config.fullPathForRoute(routeC1));
+      expect('/x/y2', config.fullPathForRoute(routeY2));
+      expect('/x/y1/z1/:param', config.fullPathForRoute(routeZ1));
+    },
+  );
 }
 
 class _MockScreen extends StatelessWidget {

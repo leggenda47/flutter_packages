@@ -345,13 +345,19 @@ class DummyStatefulWidget extends StatefulWidget {
 }
 
 class DummyStatefulWidgetState extends State<DummyStatefulWidget> {
+  int counter = 0;
+
+  void increment() => setState(() {
+        counter++;
+      });
+
   @override
   Widget build(BuildContext context) => Container();
 }
 
-Future<void> simulateAndroidBackButton() async {
+Future<void> simulateAndroidBackButton(WidgetTester tester) async {
   final ByteData message =
       const JSONMethodCodec().encodeMethodCall(const MethodCall('popRoute'));
-  await ServicesBinding.instance.defaultBinaryMessenger
+  await tester.binding.defaultBinaryMessenger
       .handlePlatformMessage('flutter/navigation', message, (_) {});
 }

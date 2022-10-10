@@ -54,19 +54,34 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
     // a non-null parentNavigatorKey or a ShellRoute with a non-null
     // parentNavigatorKey and pop from that Navigator instead of the root.
     final int matchCount = _matchList.matches.length;
+    RouteBase? childRoute;
     for (int i = matchCount - 1; i >= 0; i -= 1) {
       final RouteMatch match = _matchList.matches[i];
       final RouteBase route = match.route;
 
       if (route is GoRoute && route.parentNavigatorKey != null) {
-        // It should not be possible for a GoRoute with parentNavigatorKey to be
-        // the only page, so maybePop should never return false in this case.
-        assert(await route.parentNavigatorKey!.currentState!.maybePop());
-        return true;
-      } else if (route is ShellRoute) {
-        assert(await route.navigatorKey.currentState!.maybePop());
-        return true;
+        final bool didPop =
+            await route.parentNavigatorKey!.currentState!.maybePop();
+
+        // Continue if didPop was false.
+        if (didPop) {
+          return didPop;
+        }
+      } else if (route is ShellRouteBase && childRoute != null) {
+        // For shell routes, find the navigator key that should be used for the
+        // child route in the current match list
+        final GlobalKey<NavigatorState>? navigatorKey =
+            route.navigatorKeyForChildRoute(childRoute);
+
+        final bool didPop =
+            await navigatorKey?.currentState!.maybePop() ?? false;
+
+        // Continue if didPop was false.
+        if (didPop) {
+          return didPop;
+        }
       }
+      childRoute = route;
     }
 
     // Use the root navigator if no ShellRoute Navigators were found and didn't
@@ -118,22 +133,31 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
   bool canPop() {
     // Loop through navigators in reverse and call canPop()
     final int matchCount = _matchList.matches.length;
+    RouteBase? childRoute;
     for (int i = matchCount - 1; i >= 0; i -= 1) {
       final RouteMatch match = _matchList.matches[i];
       final RouteBase route = match.route;
       if (route is GoRoute && route.parentNavigatorKey != null) {
         final bool canPop = route.parentNavigatorKey!.currentState!.canPop();
-        // Similar to popRoute, it should not be possible for a GoRoute with
-        // parentNavigatorKey to be the only page, so canPop should return true
-        // in this case.
-        assert(canPop);
-        return canPop;
-      } else if (route is ShellRoute) {
-        final bool canPop = route.navigatorKey.currentState!.canPop();
+
+        // Continue if canPop is false.
+        if (canPop) {
+          return canPop;
+        }
+      } else if (route is ShellRouteBase && childRoute != null) {
+        // For shell routes, find the navigator key that should be used for the
+        // child route in the current match list
+        final GlobalKey<NavigatorState>? navigatorKey =
+            route.navigatorKeyForChildRoute(childRoute);
+
+        final bool canPop = navigatorKey?.currentState!.canPop() ?? false;
+
+        // Continue if canPop is false.
         if (canPop) {
           return canPop;
         }
       }
+      childRoute = route;
     }
     return navigatorKey.currentState?.canPop() ?? false;
   }

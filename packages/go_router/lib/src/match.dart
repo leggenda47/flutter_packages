@@ -47,7 +47,7 @@ class RouteMatch {
     required Map<String, List<String>> queryParametersAll,
     required Object? extra,
   }) {
-    if (route is ShellRoute) {
+    if (route is ShellRouteBase) {
       return RouteMatch(
         route: route,
         subloc: restLoc,

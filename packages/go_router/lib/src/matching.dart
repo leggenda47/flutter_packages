@@ -78,7 +78,7 @@ class RouteMatchList {
     _debugAssertNotEmpty();
 
     // Also pop ShellRoutes when there are no subsequent route matches
-    while (_matches.isNotEmpty && _matches.last.route is ShellRoute) {
+    while (_matches.isNotEmpty && _matches.last.route is ShellRouteBase) {
       _matches.removeLast();
     }
 
@@ -146,7 +146,7 @@ List<RouteMatch> _getLocRouteRecursively({
     late final String fullpath;
     if (route is GoRoute) {
       fullpath = concatenatePaths(parentFullpath, route.path);
-    } else if (route is ShellRoute) {
+    } else if (route is ShellRouteBase) {
       fullpath = parentFullpath;
     }
 
@@ -178,7 +178,7 @@ List<RouteMatch> _getLocRouteRecursively({
       // Otherwise, recurse
       final String childRestLoc;
       final String newParentSubLoc;
-      if (match.route is ShellRoute) {
+      if (match.route is ShellRouteBase) {
         childRestLoc = restLoc;
         newParentSubLoc = parentSubloc;
       } else {

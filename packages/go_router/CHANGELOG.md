@@ -1,3 +1,7 @@
+## 1.0.0+1
+
+- Fixed image
+
 ## 1.0.0
 
 - Adds a Future option to `push` and `pushNamed` making it posible to await results from a `pop`.

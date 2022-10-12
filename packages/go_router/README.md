@@ -3,7 +3,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/NazarenoCavazzon/flutter-packages/tree/main/packages/go_router">
-    <img src="./go_router_flow.svg" alt="Logo" width="200" height="200">
+    <img src="https://raw.githubusercontent.com/NazarenoCavazzon/flutter-packages/main/packages/go_router/go_router_flow.svg" alt="Logo" width="200" height="200">
   </a>
 </div>
 

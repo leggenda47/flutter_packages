@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
-import 'package:go_router_flow/go_router_flow.dart';
+import 'package:go_router_flow/go_router.dart';
 
 void main() => runApp(
       const RootRestorationScope(restorationId: 'root', child: App()),
@@ -27,7 +27,7 @@ class _AppState extends State<App> with RestorationMixin {
 
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    // Implement restoreState for your app
+    // todo: implement restoreState for you app
   }
 
   @override

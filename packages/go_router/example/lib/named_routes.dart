@@ -2,8 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// TODO(goderbauer): Refactor the examples to remove this ignore, https://github.com/flutter/flutter/issues/110210
+// ignore_for_file: avoid_dynamic_calls
+
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:go_router_flow/go_router_flow.dart';
+import 'package:go_router_flow/go_router.dart';
 
 // This scenario demonstrates how to navigate using named locations instead of
 // URLs.
@@ -13,46 +18,36 @@ import 'package:go_router_flow/go_router_flow.dart';
 // then be used in context.namedLocation to be translate back to the actual URL
 // location.
 
-/// Family data class.
-class Family {
-  /// Create a family.
-  const Family({required this.name, required this.people});
-
-  /// The last name of the family.
-  final String name;
-
-  /// The people in the family.
-  final Map<String, Person> people;
+final Map<String, dynamic> _families = const JsonDecoder().convert('''
+{
+  "f1": {
+    "name": "Doe",
+    "people": {
+      "p1": {
+        "name": "Jane",
+        "age": 23
+      },
+      "p2": {
+        "name": "John",
+        "age": 6
+      }
+    }
+  },
+  "f2": {
+    "name": "Wong",
+    "people": {
+      "p1": {
+        "name": "June",
+        "age": 51
+      },
+      "p2": {
+        "name": "Xin",
+        "age": 44
+      }
+    }
+  }
 }
-
-/// Person data class.
-class Person {
-  /// Creates a person.
-  const Person({required this.name, required this.age});
-
-  /// The first name of the person.
-  final String name;
-
-  /// The age of the person.
-  final int age;
-}
-
-const Map<String, Family> _families = <String, Family>{
-  'f1': Family(
-    name: 'Doe',
-    people: <String, Person>{
-      'p1': Person(name: 'Jane', age: 23),
-      'p2': Person(name: 'John', age: 6),
-    },
-  ),
-  'f2': Family(
-    name: 'Wong',
-    people: <String, Person>{
-      'p1': Person(name: 'June', age: 51),
-      'p2': Person(name: 'Xin', age: 44),
-    },
-  ),
-};
+''');
 
 void main() => runApp(App());
 
@@ -115,11 +110,11 @@ class HomeScreen extends StatelessWidget {
       ),
       body: ListView(
         children: <Widget>[
-          for (final MapEntry<String, Family> entry in _families.entries)
+          for (final String fid in _families.keys)
             ListTile(
-              title: Text(entry.value.name),
+              title: Text(_families[fid]['name']),
               onTap: () => context.go(context.namedLocation('family',
-                  params: <String, String>{'fid': entry.key})),
+                  params: <String, String>{'fid': fid})),
             )
         ],
       ),
@@ -137,17 +132,18 @@ class FamilyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, Person> people = _families[fid]!.people;
+    final Map<String, dynamic> people =
+        _families[fid]['people'] as Map<String, dynamic>;
     return Scaffold(
-      appBar: AppBar(title: Text(_families[fid]!.name)),
+      appBar: AppBar(title: Text(_families[fid]['name'])),
       body: ListView(
         children: <Widget>[
-          for (final MapEntry<String, Person> entry in people.entries)
+          for (final String pid in people.keys)
             ListTile(
-              title: Text(entry.value.name),
+              title: Text(people[pid]['name']),
               onTap: () => context.go(context.namedLocation(
                 'person',
-                params: <String, String>{'fid': fid, 'pid': entry.key},
+                params: <String, String>{'fid': fid, 'pid': pid},
                 queryParams: <String, String>{'qid': 'quid'},
               )),
             ),
@@ -171,11 +167,12 @@ class PersonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Family family = _families[fid]!;
-    final Person person = family.people[pid]!;
+    final Map<String, dynamic> family = _families[fid];
+    final Map<String, dynamic> person = family['people'][pid];
     return Scaffold(
-      appBar: AppBar(title: Text(person.name)),
-      body: Text('${person.name} ${family.name} is ${person.age} years old'),
+      appBar: AppBar(title: Text(person['name'])),
+      body: Text(
+          '${person['name']} ${family['name']} is ${person['age']} years old'),
     );
   }
 }

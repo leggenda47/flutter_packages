@@ -5,7 +5,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:go_router_flow/go_router_flow.dart';
+import 'package:go_router_flow/go_router.dart';
 
 // This scenario demonstrates how to use redirect to handle a asynchronous
 // sign-in flow.
@@ -57,7 +57,7 @@ class App extends StatelessWidget {
       final bool loggedIn = await StreamAuthScope.of(context).isSignedIn();
       final bool loggingIn = state.subloc == '/login';
       if (!loggedIn) {
-        return '/login';
+        return loggingIn ? null : '/login';
       }
 
       // if the user is logged in but still on the login page, send them to

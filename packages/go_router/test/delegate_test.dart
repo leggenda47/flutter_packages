@@ -4,8 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router_flow/go_router_flow.dart';
-import 'package:go_router_flow/src/delegate.dart';
+import 'package:go_router_flow/go_router.dart';
 import 'package:go_router_flow/src/match.dart';
 import 'package:go_router_flow/src/misc/error_screen.dart';
 
@@ -63,6 +62,10 @@ void main() {
       (WidgetTester tester) async {
         final GoRouter goRouter = await createGoRouter(tester);
         expect(goRouter.routerDelegate.matches.matches.length, 1);
+        expect(
+          goRouter.routerDelegate.matches.matches[0].pageKey,
+          null,
+        );
 
         goRouter.push('/a');
         await tester.pumpAndSettle();
@@ -110,75 +113,44 @@ void main() {
   });
 
   group('replace', () {
-    testWidgets('It should replace the last match with the given one',
-        (WidgetTester tester) async {
-      final GoRouter goRouter = GoRouter(
-        initialLocation: '/',
-        routes: <GoRoute>[
-          GoRoute(path: '/', builder: (_, __) => const SizedBox()),
-          GoRoute(path: '/page-0', builder: (_, __) => const SizedBox()),
-          GoRoute(path: '/page-1', builder: (_, __) => const SizedBox()),
-        ],
-      );
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: goRouter,
-        ),
-      );
-
-      goRouter.push('/page-0');
-
-      goRouter.routerDelegate.addListener(expectAsync0(() {}));
-      final RouteMatch first = goRouter.routerDelegate.matches.matches.first;
-      final RouteMatch last = goRouter.routerDelegate.matches.last;
-      goRouter.replace('/page-1');
-      expect(goRouter.routerDelegate.matches.matches.length, 2);
-      expect(
-        goRouter.routerDelegate.matches.matches.first,
-        first,
-        reason: 'The first match should still be in the list of matches',
-      );
-      expect(
-        goRouter.routerDelegate.matches.last,
-        isNot(last),
-        reason: 'The last match should have been removed',
-      );
-      expect(
-        (goRouter.routerDelegate.matches.last as ImperativeRouteMatch)
-            .matches
-            .uri
-            .toString(),
-        '/page-1',
-        reason: 'The new location should have been pushed',
-      );
-    });
-
     testWidgets(
-      'It should return different pageKey when replace is called',
+      'It should replace the last match with the given one',
       (WidgetTester tester) async {
-        final GoRouter goRouter = await createGoRouter(tester);
-        expect(goRouter.routerDelegate.matches.matches.length, 1);
-        expect(
-          goRouter.routerDelegate.matches.matches[0].pageKey,
-          isNotNull,
+        final GoRouter goRouter = GoRouter(
+          initialLocation: '/',
+          routes: <GoRoute>[
+            GoRoute(path: '/', builder: (_, __) => const SizedBox()),
+            GoRoute(path: '/page-0', builder: (_, __) => const SizedBox()),
+            GoRoute(path: '/page-1', builder: (_, __) => const SizedBox()),
+          ],
+        );
+        await tester.pumpWidget(
+          MaterialApp.router(
+            routerConfig: goRouter,
+          ),
         );
 
-        goRouter.push('/a');
-        await tester.pumpAndSettle();
+        goRouter.push('/page-0');
 
+        goRouter.routerDelegate.addListener(expectAsync0(() {}));
+        final RouteMatch first = goRouter.routerDelegate.matches.matches.first;
+        final RouteMatch last = goRouter.routerDelegate.matches.last;
+        goRouter.replace('/page-1');
         expect(goRouter.routerDelegate.matches.matches.length, 2);
         expect(
-          goRouter.routerDelegate.matches.matches.last.pageKey,
-          const Key('/a-p1'),
+          goRouter.routerDelegate.matches.matches.first,
+          first,
+          reason: 'The first match should still be in the list of matches',
         );
-
-        goRouter.replace('/a');
-        await tester.pumpAndSettle();
-
-        expect(goRouter.routerDelegate.matches.matches.length, 2);
         expect(
-          goRouter.routerDelegate.matches.matches.last.pageKey,
-          const Key('/a-p2'),
+          goRouter.routerDelegate.matches.last,
+          isNot(last),
+          reason: 'The last match should have been removed',
+        );
+        expect(
+          goRouter.routerDelegate.matches.last.fullpath,
+          '/page-1',
+          reason: 'The new location should have been pushed',
         );
       },
     );
@@ -227,11 +199,17 @@ void main() {
         );
         expect(
           goRouter.routerDelegate.matches.last,
-          isA<RouteMatch>().having(
-            (RouteMatch match) => (match.route as GoRoute).name,
-            'match.route.name',
-            'page1',
-          ),
+          isA<RouteMatch>()
+              .having(
+                (RouteMatch match) => match.fullpath,
+                'match.fullpath',
+                '/page-1',
+              )
+              .having(
+                (RouteMatch match) => (match.route as GoRoute).name,
+                'match.route.name',
+                'page1',
+              ),
           reason: 'The new location should have been pushed',
         );
       },

@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
-import 'package:go_router_flow/go_router_flow.dart';
+import 'package:go_router_flow/go_router.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -151,7 +151,8 @@ class ScaffoldWithNavBar extends StatelessWidget {
   }
 
   static int _calculateSelectedIndex(BuildContext context) {
-    final String location = GoRouterState.of(context).location;
+    final GoRouter route = GoRouter.of(context);
+    final String location = route.location;
     if (location.startsWith('/a')) {
       return 0;
     }

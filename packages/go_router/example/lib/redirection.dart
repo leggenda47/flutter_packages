@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
-import 'package:go_router_flow/go_router_flow.dart';
+import 'package:go_router_flow/go_router.dart';
 import 'package:provider/provider.dart';
 
 // This scenario demonstrates how to use redirect to handle a sign-in flow.
@@ -77,7 +77,7 @@ class App extends StatelessWidget {
       final bool loggedIn = _loginInfo.loggedIn;
       final bool loggingIn = state.subloc == '/login';
       if (!loggedIn) {
-        return '/login';
+        return loggingIn ? null : '/login';
       }
 
       // if the user is logged in but still on the login page, send them to

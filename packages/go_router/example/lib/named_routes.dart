@@ -8,7 +8,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:go_router_flow/go_router.dart';
+import 'package:go_router_flow/go_router_flow.dart';
 
 // This scenario demonstrates how to navigate using named locations instead of
 // URLs.

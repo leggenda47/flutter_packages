@@ -1,5 +1,12 @@
 # go_router_flow
 
+<br />
+<div align="center">
+  <a href="https://github.com/NazarenoCavazzon/flutter-packages/tree/main/packages/go_router">
+    <img src="./go_router_flow.svg" alt="Logo" width="200" height="200">
+  </a>
+</div>
+
 This package was created for [SportsVisio's](https://sportsvisio.com/) apps, and it's currently in use and tested, and it'll be updated until the day go_router implements it.
 
 This is a fork of the go_router package that let's you communicate between pages by returning values on pop like in navigator 1.0. This was implemented by adding completers in the routes and waiting for the values when requested.
@@ -244,5 +251,15 @@ See [examples](https://github.com/flutter/packages/tree/main/packages/go_router/
 See the [Changelog](https://github.com/flutter/packages/blob/main/packages/go_router/CHANGELOG.md)
 for a list of new features and breaking changes.
 
+## Maintainer
+
+- [Nazareno Cavazzon](https://github.com/NazarenoCavazzon)
+
+## Collaborators
+
+- [Jorge Rincon](https://github.com/jorger5)
+- [Tomás Sasovsky](https://github.com/tomassasovsky)
+- [Maximo Verzini](https://github.com/extrordinaire)
+- [Tomás Tisocco](https://github.com/tomasatisocco)
 
 

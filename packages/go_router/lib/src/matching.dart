@@ -75,14 +75,10 @@ class RouteMatchList {
   void pop() {
     _matches.removeLast();
 
-    _debugAssertNotEmpty();
-
     // Also pop ShellRoutes when there are no subsequent route matches
     while (_matches.isNotEmpty && _matches.last.route is ShellRoute) {
       _matches.removeLast();
     }
-
-    _debugAssertNotEmpty();
   }
 
   /// An optional object provided by the app during navigation.
@@ -99,13 +95,6 @@ class RouteMatchList {
 
   /// Returns the error that this match intends to display.
   Exception? get error => matches.first.error;
-
-  void _debugAssertNotEmpty() {
-    assert(
-        _matches.isNotEmpty,
-        'You have popped the last page off of the stack,'
-        ' there are no pages left to show');
-  }
 }
 
 /// An error that occurred during matching.

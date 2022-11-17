@@ -33,7 +33,8 @@ Returning a value:
 onTap: () => context.pop(true)
 ```
 
-## Getting Started
+## Features
+GoRouter has a number of features to make navigation straightforward:
 
 Follow the [package install instructions](https://pub.dev/packages/go_router_flow/install),
 and you can start using go_router_flow in your app:
@@ -237,18 +238,29 @@ in the example/ directory.
 ### Still not sure how to proceed?
 See [examples](https://github.com/flutter/packages/tree/main/packages/go_router/example) for complete runnable examples or visit [API documentation](https://pub.dev/documentation/go_router/latest/go_router/go_router-library.html)
 
+- [Getting started](https://pub.dev/documentation/go_router/latest/topics/Get%20started-topic.html)
+- [Upgrade an existing app](https://pub.dev/documentation/go_router/latest/topics/Upgrading-topic.html)
+- [Configuration](https://pub.dev/documentation/go_router/latest/topics/Configuration-topic.html)
+- [Navigation](https://pub.dev/documentation/go_router/latest/topics/Navigation-topic.html)
+- [Redirection](https://pub.dev/documentation/go_router/latest/topics/Redirection-topic.html)
+- [Web](https://pub.dev/documentation/go_router/latest/topics/Web-topic.html)
+- [Deep linking](https://pub.dev/documentation/go_router/latest/topics/Deep%20linking-topic.html)
+- [Transition animations](https://pub.dev/documentation/go_router/latest/topics/Transition%20animations-topic.html)
+- [Type-safe routes](https://pub.dev/documentation/go_router/latest/topics/Type-safe%20routes-topic.html)
+- [Named routes](https://pub.dev/documentation/go_router/latest/topics/Named%20routes-topic.html)
+- [Error handling](https://pub.dev/documentation/go_router/latest/topics/Error%20handling-topic.html)
 
 ## Migration guides
-
-- [Migrating to 2.0](https://flutter.dev/go/go-router-v2-breaking-changes)
-- [Migrating to 2.5](https://flutter.dev/go/go-router-v2-5-breaking-changes)
-- [Migrating to 3.0](https://flutter.dev/go/go-router-v3-breaking-changes)
-- [Migrating to 4.0](https://flutter.dev/go/go-router-v4-breaking-changes)
+- [Migrating to 5.1.2](https://flutter.dev/go/go-router-v5-1-2-breaking-changes)
 - [Migrating to 5.0](https://flutter.dev/go/go-router-v5-breaking-changes)
+- [Migrating to 4.0](https://flutter.dev/go/go-router-v4-breaking-changes)
+- [Migrating to 3.0](https://flutter.dev/go/go-router-v3-breaking-changes)
+- [Migrating to 2.5](https://flutter.dev/go/go-router-v2-5-breaking-changes)
+- [Migrating to 2.0](https://flutter.dev/go/go-router-v2-breaking-changes)
 
 ## Changelog
-
-See the [Changelog](https://github.com/flutter/packages/blob/main/packages/go_router/CHANGELOG.md)
+See the
+[Changelog](https://github.com/flutter/packages/blob/main/packages/go_router/CHANGELOG.md)
 for a list of new features and breaking changes.
 
 ## Maintainer

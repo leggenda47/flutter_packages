@@ -148,8 +148,18 @@ class GoRouter extends ChangeNotifier implements RouterConfig<RouteMatchList> {
   bool canPop() => _routerDelegate.canPop();
 
   void _handleStateMayChange() {
-    final String newLocation =
-        _routerDelegate.currentConfiguration.location.toString();
+    final String newLocation;
+    if (routerDelegate.currentConfiguration.isNotEmpty &&
+        routerDelegate.currentConfiguration.matches.last
+            is ImperativeRouteMatch) {
+      newLocation = (routerDelegate.currentConfiguration.matches.last
+              as ImperativeRouteMatch)
+          .matches
+          .uri
+          .toString();
+    } else {
+      newLocation = _routerDelegate.currentConfiguration.uri.toString();
+    }
     if (_location != newLocation) {
       _location = newLocation;
       notifyListeners();
@@ -201,7 +211,7 @@ class GoRouter extends ChangeNotifier implements RouterConfig<RouteMatchList> {
       log.info('pushing $location');
       return true;
     }());
-    final RouteMatchList matchList =
+    final RouteMatchList matches =
         await _routeInformationParser.parseRouteInformationWithDependencies(
       RouteInformation(location: location, state: extra),
       // TODO(chunhtai): avoid accessing the context directly through global key.
@@ -209,7 +219,7 @@ class GoRouter extends ChangeNotifier implements RouterConfig<RouteMatchList> {
       _routerDelegate.navigatorKey.currentContext!,
     );
 
-    return _routerDelegate.push<T?>(matchList.last);
+    return _routerDelegate.push<T?>(matches);
   }
 
   /// Push a named route asynchronously onto the page stack w/ optional
@@ -242,7 +252,7 @@ class GoRouter extends ChangeNotifier implements RouterConfig<RouteMatchList> {
   /// * [push] which pushes the location onto the page stack.
   Future<T?> replace<T extends Object?>(String location,
       {Object? extra}) async {
-    final RouteMatchList matchList =
+    final RouteMatchList matches =
         await routeInformationParser.parseRouteInformationWithDependencies(
       RouteInformation(location: location, state: extra),
       // TODO(chunhtai): avoid accessing the context directly through global key.
@@ -250,7 +260,7 @@ class GoRouter extends ChangeNotifier implements RouterConfig<RouteMatchList> {
       _routerDelegate.navigatorKey.currentContext!,
     );
 
-    return routerDelegate.replace<T?>(matchList.matches.last);
+    return routerDelegate.replace<T?>(matches);
   }
 
   /// Replaces the top-most page of the page stack with the named route w/

@@ -1,6 +1,6 @@
 name: go_router_flow
 description: A fork of go_router that let's you returns value on pop like navigator 1.0
-version: 1.0.0+1
+version: 2.0.0
 repository: https://github.com/NazarenoCavazzon/flutter-packages/tree/main/packages/go_router
 
 environment:

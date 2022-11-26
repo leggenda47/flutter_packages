@@ -1,3 +1,7 @@
+## 2.0.0
+
+- Updated to go_router 5.2.0
+
 ## 1.0.0+1
 
 - Fixed image

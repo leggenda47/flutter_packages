@@ -18,7 +18,7 @@ class RouteMatch {
     required this.route,
     required this.subloc,
     required this.extra,
-    this.completer,
+    required this.completer,
     required this.error,
     required this.pageKey,
   });

@@ -113,6 +113,7 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
       error: matches.last.error,
       pageKey: pageKey,
       matches: matches,
+      completer: completer,
     );
 
     _matchList.push(newPageKeyMatch);
@@ -230,6 +231,7 @@ class ImperativeRouteMatch extends RouteMatch {
     required super.error,
     required super.pageKey,
     required this.matches,
+    required super.completer,
   });
 
   /// The matches that produces this route match.

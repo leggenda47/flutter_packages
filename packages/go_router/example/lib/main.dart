@@ -62,7 +62,10 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             ElevatedButton(
-              onPressed: () => context.go('/details'),
+              onPressed: () async {
+                final result = await context.push<bool>('/details');
+                print('VALOR: $result');
+              },
               child: const Text('Go to the Details screen'),
             ),
           ],
@@ -86,7 +89,7 @@ class DetailsScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <ElevatedButton>[
             ElevatedButton(
-              onPressed: () => context.go('/'),
+              onPressed: () => context.pop(true),
               child: const Text('Go back to the Home screen'),
             ),
           ],

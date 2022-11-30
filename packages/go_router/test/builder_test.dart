@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router_flow/src/builder.dart';
@@ -31,6 +33,7 @@ void main() {
       final RouteMatchList matches = RouteMatchList(
           <RouteMatch>[
             RouteMatch(
+              completer: Completer<void>(),
               route: config.routes.first as GoRoute,
               subloc: '/',
               extra: null,
@@ -78,6 +81,7 @@ void main() {
       final RouteMatchList matches = RouteMatchList(
           <RouteMatch>[
             RouteMatch(
+              completer: Completer<void>(),
               route: config.routes.first,
               subloc: '/',
               extra: null,
@@ -120,6 +124,7 @@ void main() {
       final RouteMatchList matches = RouteMatchList(
           <RouteMatch>[
             RouteMatch(
+              completer: Completer<void>(),
               route: config.routes.first as GoRoute,
               subloc: '/',
               extra: null,
@@ -175,6 +180,7 @@ void main() {
       final RouteMatchList matches = RouteMatchList(
           <RouteMatch>[
             RouteMatch(
+              completer: Completer<void>(),
               route: config.routes.first,
               subloc: '',
               extra: null,
@@ -182,6 +188,7 @@ void main() {
               pageKey: const ValueKey<String>(''),
             ),
             RouteMatch(
+              completer: Completer<void>(),
               route: config.routes.first.routes.first,
               subloc: '/details',
               extra: null,
@@ -250,6 +257,7 @@ void main() {
       final RouteMatchList matches = RouteMatchList(
           <RouteMatch>[
             RouteMatch(
+              completer: Completer<void>(),
               route: config.routes.first.routes.first as GoRoute,
               subloc: '/a/details',
               extra: null,

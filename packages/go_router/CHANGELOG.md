@@ -1,3 +1,8 @@
+## 5.2.0
+
+- Returning values now works again
+- Version number will match the go_router version it's updated
+
 ## 2.0.0
 
 - Updated to go_router 5.2.0

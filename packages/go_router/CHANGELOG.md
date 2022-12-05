@@ -1,3 +1,7 @@
+## 5.2.0+1
+
+- .go flow fixed
+
 ## 5.2.0
 
 - Returning values now works again

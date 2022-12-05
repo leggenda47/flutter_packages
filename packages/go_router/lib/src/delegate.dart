@@ -161,10 +161,13 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
   void pop<T extends Object?>([T? value]) {
     final RouteMatch last = _matchList.last;
 
-    // If there is a promise for this page, complete it.
-    if (last.completer != null) {
-      last.completer?.complete(value);
-    }
+    try {
+      // If there is a promise for this page, complete it.
+      if (last.completer != null) {
+        last.completer?.complete(value);
+      }
+    } catch (_) {}
+
     _matchList.pop();
     assert(() {
       _debugAssertMatchListNotEmpty();

@@ -75,11 +75,13 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
     return false;
   }
 
-  /// Pushes the given location onto the page stack
-  void push(RouteMatchList matches) {
+  /// Pushes the given location onto the page stack with an optional promise.
+  // Remap the pageKey to allow any number of the same page on the stack.
+  Future<T?> push<T extends Object?>(RouteMatchList matches) {
     assert(matches.last.route is! ShellRouteBase);
 
-    // Remap the pageKey to allow any number of the same page on the stack
+    final Completer<T?> completer = Completer<T?>();
+
     final int count = (_pushCounts[matches.fullpath] ?? 0) + 1;
     _pushCounts[matches.fullpath] = count;
     final ValueKey<String> pageKey =
@@ -89,12 +91,14 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
       subloc: matches.last.subloc,
       extra: matches.last.extra,
       error: matches.last.error,
+      completer: completer,
       pageKey: pageKey,
       matches: matches,
     );
 
     _matchList.push(newPageKeyMatch);
     notifyListeners();
+    return completer.future;
   }
 
   /// Returns `true` if the active Navigator can pop.
@@ -108,24 +112,19 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
     return false;
   }
 
-  /// Pops the top-most route.
-  void pop<T extends Object?>([T? result]) {
+  /// Pop the top page off the GoRouter's page stack and complete a promise if
+  /// there is one.
+  void pop<T extends Object?>([T? value]) {
     final _NavigatorStateIterator iterator = _createNavigatorStateIterator();
     while (iterator.moveNext()) {
       if (iterator.current.canPop()) {
-        iterator.current.pop<T>(result);
+        matches.last.completer?.complete(value);
+        iterator.current.pop<T>(value);
+        notifyListeners();
         return;
       }
     }
     throw GoError('There is nothing to pop');
-  }
-
-  void _debugAssertMatchListNotEmpty() {
-    assert(
-      _matchList.isNotEmpty,
-      'You have popped the last page off of the stack,'
-      ' there are no pages left to show',
-    );
   }
 
   bool _onPopPage(Route<Object?> route, Object? result) {
@@ -135,7 +134,6 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
     _matchList.pop();
     notifyListeners();
     assert(() {
-      _debugAssertMatchListNotEmpty();
       return true;
     }());
     return true;
@@ -145,9 +143,11 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
   ///
   /// See also:
   /// * [push] which pushes the given location onto the page stack.
-  void replace(RouteMatchList matches) {
+  Future<T?>? replace<T extends Object?>(RouteMatchList matches) {
+    final Future<T?>? future = matches.last.completer?.future as Future<T?>?;
     _matchList.pop();
     push(matches); // [push] will notify the listeners.
+    return future;
   }
 
   /// For internal use; visible for testing only.
@@ -283,6 +283,7 @@ class ImperativeRouteMatch extends RouteMatch {
     required super.error,
     required super.pageKey,
     required this.matches,
+    super.completer,
   });
 
   /// The matches that produces this route match.

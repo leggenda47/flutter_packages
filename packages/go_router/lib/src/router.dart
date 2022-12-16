@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 
 import 'configuration.dart';
@@ -202,34 +204,34 @@ class GoRouter extends ChangeNotifier implements RouterConfig<RouteMatchList> {
         extra: extra,
       );
 
-  /// Push a URI location onto the page stack w/ optional query parameters, e.g.
-  /// `/family/f2/person/p1?color=blue`
-  void push(String location, {Object? extra}) {
+  /// Push a URI location onto the page stack w/ optional query parameters
+  /// and promise, e.g. `/family/f2/person/p1?color=blue`.
+  Future<T?> push<T extends Object?>(String location, {Object? extra}) async {
     assert(() {
       log.info('pushing $location');
       return true;
     }());
-    _routeInformationParser
+    return _routeInformationParser
         .parseRouteInformationWithDependencies(
       RouteInformation(location: location, state: extra),
       // TODO(chunhtai): avoid accessing the context directly through global key.
       // https://github.com/flutter/flutter/issues/99112
       _routerDelegate.navigatorKey.currentContext!,
     )
-        .then<void>((RouteMatchList matches) {
-      _routerDelegate.push(matches);
+        .then((RouteMatchList matches) {
+      return _routerDelegate.push<T?>(matches);
     });
   }
 
-  /// Push a named route onto the page stack w/ optional parameters, e.g.
-  /// `name='person', params={'fid': 'f2', 'pid': 'p1'}`
-  void pushNamed(
+  /// Push a named route asynchronously onto the page stack w/ optional
+  /// parameters and promise.
+  Future<T?> pushNamed<T extends Object?>(
     String name, {
     Map<String, String> params = const <String, String>{},
     Map<String, dynamic> queryParams = const <String, dynamic>{},
     Object? extra,
   }) =>
-      push(
+      push<T?>(
         namedLocation(name, params: params, queryParams: queryParams),
         extra: extra,
       );
@@ -240,16 +242,16 @@ class GoRouter extends ChangeNotifier implements RouterConfig<RouteMatchList> {
   /// See also:
   /// * [go] which navigates to the location.
   /// * [push] which pushes the location onto the page stack.
-  void replace(String location, {Object? extra}) {
-    routeInformationParser
+  Future<T?> replace<T extends Object?>(String location, {Object? extra}) {
+    return routeInformationParser
         .parseRouteInformationWithDependencies(
       RouteInformation(location: location, state: extra),
       // TODO(chunhtai): avoid accessing the context directly through global key.
       // https://github.com/flutter/flutter/issues/99112
       _routerDelegate.navigatorKey.currentContext!,
     )
-        .then<void>((RouteMatchList matchList) {
-      routerDelegate.replace(matchList);
+        .then((RouteMatchList matchList) {
+      return routerDelegate.replace<T?>(matchList);
     });
   }
 
@@ -260,13 +262,13 @@ class GoRouter extends ChangeNotifier implements RouterConfig<RouteMatchList> {
   /// See also:
   /// * [goNamed] which navigates a named route.
   /// * [pushNamed] which pushes a named route onto the page stack.
-  void replaceNamed(
+  Future<T?> replaceNamed<T extends Object?>(
     String name, {
     Map<String, String> params = const <String, String>{},
     Map<String, dynamic> queryParams = const <String, dynamic>{},
     Object? extra,
   }) {
-    replace(
+    return replace<T?>(
       namedLocation(name, params: params, queryParams: queryParams),
       extra: extra,
     );

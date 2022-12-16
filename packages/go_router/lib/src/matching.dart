@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -208,8 +209,8 @@ List<RouteMatch>? _getLocRouteRecursively({
       route: route,
       restLoc: restLoc,
       parentSubloc: parentSubloc,
-      pathParameters: subPathParameters,
       extra: extra,
+      completer: Completer<void>(),
     );
 
     if (match == null) {
@@ -271,6 +272,7 @@ RouteMatchList errorScreen(Uri uri, String errorMessage) {
   return RouteMatchList(
       <RouteMatch>[
         RouteMatch(
+          completer: Completer<void>(),
           subloc: uri.path,
           extra: null,
           error: error,

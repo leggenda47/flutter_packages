@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -19,6 +21,7 @@ class RouteMatch {
     required this.extra,
     required this.error,
     required this.pageKey,
+    this.completer,
   });
 
   // ignore: public_member_api_docs
@@ -26,7 +29,7 @@ class RouteMatch {
     required RouteBase route,
     required String restLoc, // e.g. person/p1
     required String parentSubloc, // e.g. /family/f2
-    required Map<String, String> pathParameters,
+    Completer<dynamic>? completer,
     required Object? extra,
   }) {
     if (route is ShellRouteBase) {
@@ -34,6 +37,7 @@ class RouteMatch {
         route: route,
         subloc: restLoc,
         extra: extra,
+        completer: completer,
         error: null,
         pageKey: ValueKey<String>(route.hashCode.toString()),
       );
@@ -46,14 +50,12 @@ class RouteMatch {
       }
 
       final Map<String, String> encodedParams = route.extractPathParams(match);
-      for (final MapEntry<String, String> param in encodedParams.entries) {
-        pathParameters[param.key] = Uri.decodeComponent(param.value);
-      }
       final String pathLoc = patternToPath(route.path, encodedParams);
       final String subloc = concatenatePaths(parentSubloc, pathLoc);
       return RouteMatch(
         route: route,
         subloc: subloc,
+        completer: completer,
         extra: extra,
         error: null,
         pageKey: ValueKey<String>(route.hashCode.toString()),
@@ -67,6 +69,9 @@ class RouteMatch {
 
   /// The matched location.
   final String subloc; // e.g. /family/f2
+
+  /// The completer for the promise when pushing routes.
+  final Completer<dynamic>? completer;
 
   /// An extra object to pass along with the navigation.
   final Object? extra;

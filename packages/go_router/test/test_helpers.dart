@@ -95,9 +95,10 @@ class GoRouterPushSpy extends GoRouter {
   Object? extra;
 
   @override
-  void push(String location, {Object? extra}) {
+  Future<T?> push<T extends Object?>(String location, {Object? extra}) async {
     myLocation = location;
     this.extra = extra;
+    return null;
   }
 }
 

@@ -204,21 +204,19 @@ class GoRouter extends ChangeNotifier implements RouterConfig<RouteMatchList> {
 
   /// Push a URI location onto the page stack w/ optional query parameters, e.g.
   /// `/family/f2/person/p1?color=blue`
-  void push(String location, {Object? extra}) {
+  Future<T?> push<T extends Object?>(String location, {Object? extra}) async {
     assert(() {
       log.info('pushing $location');
       return true;
     }());
-    _routeInformationParser
-        .parseRouteInformationWithDependencies(
+    final RouteMatchList matches =
+        await _routeInformationParser.parseRouteInformationWithDependencies(
       RouteInformation(location: location, state: extra),
       // TODO(chunhtai): avoid accessing the context directly through global key.
       // https://github.com/flutter/flutter/issues/99112
       _routerDelegate.navigatorKey.currentContext!,
-    )
-        .then<void>((RouteMatchList matches) {
-      _routerDelegate.push(matches);
-    });
+    );
+    return _routerDelegate.push<T>(matches);
   }
 
   /// Push a named route onto the page stack w/ optional parameters, e.g.

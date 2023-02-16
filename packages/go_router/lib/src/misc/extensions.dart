@@ -37,7 +37,7 @@ extension GoRouterHelper on BuildContext {
       );
 
   /// Push a location onto the page stack.
-  void push(String location, {Object? extra}) =>
+  Future<T?> push<T extends Object?>(String location, {Object? extra}) =>
       GoRouter.of(this).push(location, extra: extra);
 
   /// Navigate to a named route onto the page stack.

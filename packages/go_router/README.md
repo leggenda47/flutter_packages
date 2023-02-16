@@ -125,7 +125,8 @@ GoRouter(
   ...
   redirect: (context, state) async {
     if (await LoginService.of(context).isLoggedIn) {
-      return state.location;
+      // No redirect is required if the user is already logged in.
+      return null;
     }
     return '/login';
   },
@@ -233,11 +234,16 @@ See [examples](https://github.com/flutter/packages/tree/main/packages/go_router/
 - [Migrating to 3.0](https://flutter.dev/go/go-router-v3-breaking-changes)
 - [Migrating to 4.0](https://flutter.dev/go/go-router-v4-breaking-changes)
 - [Migrating to 5.0](https://flutter.dev/go/go-router-v5-breaking-changes)
+- [Migrating to 5.1.2](https://flutter.dev/go/go-router-v5-1-2-breaking-changes)
 
 ## Changelog
 
 See the [Changelog](https://github.com/flutter/packages/blob/main/packages/go_router/CHANGELOG.md)
 for a list of new features and breaking changes.
+
+## Roadmap
+
+See the [github project](https://github.com/orgs/flutter/projects/17/) for our current priority.
 
 
 

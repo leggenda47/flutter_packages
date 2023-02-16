@@ -1,3 +1,17 @@
+## 4.2.5
+
+* [dart] Fixes enum parameter handling in Dart test API class.
+
+## 4.2.4
+
+* [kotlin] Fixes Kotlin generated sync host api error.
+
+## 4.2.3
+
+* [java] Adds assert `args != null`.
+* [java] Changes the args of a single element to `ArrayList` from `Arrays.asList` to `Collections.singletonList`.
+* [java] Removes cast for `Object`.
+
 ## 4.2.2
 
 * Removes unneeded custom codecs for all languages.

@@ -65,6 +65,18 @@ class GoRouteInformationParser extends RouteInformationParser<RouteMatchList> {
       // still try to process the top-level redirects.
       initialMatches = RouteMatchList.empty;
     }
+    return processRedirection(initialMatches, context,
+        topRouteInformation: routeInformation);
+  }
+
+  /// Processes any redirections for the provided RouteMatchList.
+  Future<RouteMatchList> processRedirection(
+      RouteMatchList routeMatchList, BuildContext context,
+      {RouteInformation? topRouteInformation}) {
+    final RouteInformation routeInformation = topRouteInformation ??
+        RouteInformation(
+            location: routeMatchList.uri.toString(),
+            state: routeMatchList.extra);
     Future<RouteMatchList> processRedirectorResult(RouteMatchList matches) {
       if (matches.isEmpty) {
         return SynchronousFuture<RouteMatchList>(errorScreen(
@@ -77,7 +89,7 @@ class GoRouteInformationParser extends RouteInformationParser<RouteMatchList> {
 
     final FutureOr<RouteMatchList> redirectorResult = redirector(
       context,
-      SynchronousFuture<RouteMatchList>(initialMatches),
+      SynchronousFuture<RouteMatchList>(routeMatchList),
       configuration,
       matcher,
       extra: routeInformation.state,

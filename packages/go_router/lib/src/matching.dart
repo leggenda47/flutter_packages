@@ -54,9 +54,14 @@ class RouteMatchList {
       : _matches = matches,
         fullpath = _generateFullPath(matches);
 
+  /// Creates an immutable clone of this RouteMatchList.
+  UnmodifiableRouteMatchList unmodifiableRouteMatchList() {
+    return UnmodifiableRouteMatchList.from(this);
+  }
+
   /// Constructs an empty matches object.
-  static RouteMatchList empty =
-      RouteMatchList(<RouteMatch>[], Uri.parse(''), const <String, String>{});
+  static RouteMatchList empty = RouteMatchList(
+      const <RouteMatch>[], Uri.parse(''), const <String, String>{});
 
   static String _generateFullPath(Iterable<RouteMatch> matches) {
     final StringBuffer buffer = StringBuffer();
@@ -105,7 +110,7 @@ class RouteMatchList {
     _matches.removeRange(index, _matches.length);
 
     // Also pop ShellRoutes when there are no subsequent route matches
-    while (_matches.isNotEmpty && _matches.last.route is ShellRoute) {
+    while (_matches.isNotEmpty && _matches.last.route is ShellRouteBase) {
       _matches.removeLast();
     }
 
@@ -140,6 +145,48 @@ class RouteMatchList {
   String toString() {
     return '${objectRuntimeType(this, 'RouteMatchList')}($fullpath)';
   }
+}
+
+/// Unmodifiable version of [RouteMatchList].
+@immutable
+class UnmodifiableRouteMatchList {
+  /// UnmodifiableRouteMatchList constructor.
+  UnmodifiableRouteMatchList.from(RouteMatchList routeMatchList)
+      : _matches = List<RouteMatch>.unmodifiable(routeMatchList.matches),
+        _uri = routeMatchList.uri,
+        _pathParameters =
+            Map<String, String>.unmodifiable(routeMatchList.pathParameters);
+
+  /// Creates a new [RouteMatchList] from this UnmodifiableRouteMatchList.
+  RouteMatchList get routeMatchList => RouteMatchList(
+      List<RouteMatch>.from(_matches),
+      _uri,
+      Map<String, String>.from(_pathParameters));
+
+  /// The route matches.
+  final List<RouteMatch> _matches;
+
+  /// The uri of the current match.
+  final Uri _uri;
+
+  /// Parameters for the matched route, URI-encoded.
+  final Map<String, String> _pathParameters;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(other, this)) {
+      return true;
+    }
+    if (other is! UnmodifiableRouteMatchList) {
+      return false;
+    }
+    return listEquals(other._matches, _matches) &&
+        other._uri == _uri &&
+        mapEquals(other._pathParameters, _pathParameters);
+  }
+
+  @override
+  int get hashCode => Object.hash(_matches, _uri, _pathParameters);
 }
 
 /// An error that occurred during matching.
@@ -198,7 +245,7 @@ List<RouteMatch>? _getLocRouteRecursively({
       // Otherwise, recurse
       final String childRestLoc;
       final String newParentSubLoc;
-      if (match.route is ShellRoute) {
+      if (match.route is ShellRouteBase) {
         childRestLoc = restLoc;
         newParentSubLoc = parentSubloc;
       } else {

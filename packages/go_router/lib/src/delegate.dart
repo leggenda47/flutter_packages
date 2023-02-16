@@ -77,7 +77,7 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
 
   /// Pushes the given location onto the page stack
   void push(RouteMatchList matches) {
-    assert(matches.last.route is! ShellRoute);
+    assert(matches.last.route is! ShellRouteBase);
 
     // Remap the pageKey to allow any number of the same page on the stack
     final int count = (_pushCounts[matches.fullpath] ?? 0) + 1;
@@ -210,6 +210,7 @@ class _NavigatorStateIterator extends Iterator<NavigatorState> {
     if (index < 0) {
       return false;
     }
+    late RouteBase subRoute;
     for (index -= 1; index >= 0; index -= 1) {
       final RouteMatch match = matchList.matches[index];
       final RouteBase route = match.route;
@@ -247,19 +248,22 @@ class _NavigatorStateIterator extends Iterator<NavigatorState> {
 
         current = parentNavigatorKey.currentState!;
         return true;
-      } else if (route is ShellRoute) {
+      } else if (route is ShellRouteBase) {
         // Must have a ModalRoute parent because the navigator ShellRoute
         // created must not be the root navigator.
+        final GlobalKey<NavigatorState> navigatorKey =
+            route.navigatorKeyForSubRoute(subRoute);
         final ModalRoute<Object?> parentModalRoute =
-            ModalRoute.of(route.navigatorKey.currentContext!)!;
+            ModalRoute.of(navigatorKey.currentContext!)!;
         // There may be pageless route on top of ModalRoute that the
         // parentNavigatorKey is in. For example an open dialog.
         if (parentModalRoute.isCurrent == false) {
           continue;
         }
-        current = route.navigatorKey.currentState!;
+        current = navigatorKey.currentState!;
         return true;
       }
+      subRoute = route;
     }
     assert(index == -1);
     current = root;
@@ -271,7 +275,7 @@ class _NavigatorStateIterator extends Iterator<NavigatorState> {
 // TODO(chunhtai): Removes this once imperative API no longer insert route match.
 class ImperativeRouteMatch extends RouteMatch {
   /// Constructor for [ImperativeRouteMatch].
-  ImperativeRouteMatch({
+  const ImperativeRouteMatch({
     required super.route,
     required super.subloc,
     required super.extra,
@@ -282,4 +286,18 @@ class ImperativeRouteMatch extends RouteMatch {
 
   /// The matches that produces this route match.
   final RouteMatchList matches;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(other, this)) {
+      return true;
+    }
+    if (other is! ImperativeRouteMatch) {
+      return false;
+    }
+    return super == this && other.matches == matches;
+  }
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, matches);
 }

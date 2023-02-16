@@ -81,6 +81,400 @@ void main() {
     });
 
     test(
+        'throws when a sub-route of StatefulShellRoute has a parentNavigatorKey',
+        () {
+      final GlobalKey<NavigatorState> root =
+          GlobalKey<NavigatorState>(debugLabel: 'root');
+      final GlobalKey<NavigatorState> someNavigatorKey =
+          GlobalKey<NavigatorState>();
+      expect(
+        () {
+          RouteConfiguration(
+            navigatorKey: root,
+            routes: <RouteBase>[
+              StatefulShellRoute(branches: <StatefulShellBranch>[
+                StatefulShellBranch(
+                  routes: <RouteBase>[
+                    GoRoute(
+                        path: '/a',
+                        builder: _mockScreenBuilder,
+                        routes: <RouteBase>[
+                          GoRoute(
+                              path: 'details',
+                              builder: _mockScreenBuilder,
+                              parentNavigatorKey: someNavigatorKey),
+                        ]),
+                  ],
+                ),
+                StatefulShellBranch(
+                  routes: <RouteBase>[
+                    GoRoute(
+                        path: '/b',
+                        builder: _mockScreenBuilder,
+                        parentNavigatorKey: someNavigatorKey),
+                  ],
+                ),
+              ], builder: _mockShellBuilder),
+            ],
+            redirectLimit: 10,
+            topRedirect: (BuildContext context, GoRouterState state) {
+              return null;
+            },
+          );
+        },
+        throwsAssertionError,
+      );
+    });
+
+    test('throws when StatefulShellRoute has duplicate navigator keys', () {
+      final GlobalKey<NavigatorState> root =
+          GlobalKey<NavigatorState>(debugLabel: 'root');
+      final GlobalKey<NavigatorState> keyA =
+          GlobalKey<NavigatorState>(debugLabel: 'A');
+      final List<GoRoute> shellRouteChildren = <GoRoute>[
+        GoRoute(
+            path: '/a', builder: _mockScreenBuilder, parentNavigatorKey: keyA),
+        GoRoute(
+            path: '/b', builder: _mockScreenBuilder, parentNavigatorKey: keyA),
+      ];
+      expect(
+        () {
+          RouteConfiguration(
+            navigatorKey: root,
+            routes: <RouteBase>[
+              StatefulShellRoute(branches: <StatefulShellBranch>[
+                StatefulShellBranch(routes: shellRouteChildren)
+              ], builder: _mockShellBuilder),
+            ],
+            redirectLimit: 10,
+            topRedirect: (BuildContext context, GoRouterState state) {
+              return null;
+            },
+          );
+        },
+        throwsAssertionError,
+      );
+    });
+
+    test(
+        'throws when a child of StatefulShellRoute has an incorrect '
+        'parentNavigatorKey', () {
+      final GlobalKey<NavigatorState> root =
+          GlobalKey<NavigatorState>(debugLabel: 'root');
+      final GlobalKey<NavigatorState> sectionANavigatorKey =
+          GlobalKey<NavigatorState>();
+      final GlobalKey<NavigatorState> sectionBNavigatorKey =
+          GlobalKey<NavigatorState>();
+      final GoRoute routeA = GoRoute(
+          path: '/a',
+          builder: _mockScreenBuilder,
+          parentNavigatorKey: sectionBNavigatorKey);
+      final GoRoute routeB = GoRoute(
+          path: '/b',
+          builder: _mockScreenBuilder,
+          parentNavigatorKey: sectionANavigatorKey);
+      expect(
+        () {
+          RouteConfiguration(
+            navigatorKey: root,
+            routes: <RouteBase>[
+              StatefulShellRoute(branches: <StatefulShellBranch>[
+                StatefulShellBranch(
+                    routes: <RouteBase>[routeA],
+                    navigatorKey: sectionANavigatorKey),
+                StatefulShellBranch(
+                    routes: <RouteBase>[routeB],
+                    navigatorKey: sectionBNavigatorKey),
+              ], builder: _mockShellBuilder),
+            ],
+            redirectLimit: 10,
+            topRedirect: (BuildContext context, GoRouterState state) {
+              return null;
+            },
+          );
+        },
+        throwsAssertionError,
+      );
+    });
+
+    test(
+        'throws when a branch of a StatefulShellRoute has an incorrect '
+        'defaultLocation', () {
+      final GlobalKey<NavigatorState> root =
+          GlobalKey<NavigatorState>(debugLabel: 'root');
+      final GlobalKey<NavigatorState> sectionANavigatorKey =
+          GlobalKey<NavigatorState>();
+      final GlobalKey<NavigatorState> sectionBNavigatorKey =
+          GlobalKey<NavigatorState>();
+      expect(
+        () {
+          RouteConfiguration(
+            navigatorKey: root,
+            routes: <RouteBase>[
+              StatefulShellRoute(branches: <StatefulShellBranch>[
+                StatefulShellBranch(
+                  defaultLocation: '/x',
+                  navigatorKey: sectionANavigatorKey,
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: '/a',
+                      builder: _mockScreenBuilder,
+                    ),
+                  ],
+                ),
+                StatefulShellBranch(
+                  navigatorKey: sectionBNavigatorKey,
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: '/b',
+                      builder: _mockScreenBuilder,
+                    ),
+                  ],
+                ),
+              ], builder: _mockShellBuilder),
+            ],
+            redirectLimit: 10,
+            topRedirect: (BuildContext context, GoRouterState state) {
+              return null;
+            },
+          );
+        },
+        throwsAssertionError,
+      );
+    });
+
+    test(
+        'throws when a branch of a StatefulShellRoute has a defaultLocation '
+        'that is not a descendant of the same branch', () {
+      final GlobalKey<NavigatorState> root =
+          GlobalKey<NavigatorState>(debugLabel: 'root');
+      final GlobalKey<NavigatorState> sectionANavigatorKey =
+          GlobalKey<NavigatorState>();
+      final GlobalKey<NavigatorState> sectionBNavigatorKey =
+          GlobalKey<NavigatorState>();
+      expect(
+        () {
+          RouteConfiguration(
+            navigatorKey: root,
+            routes: <RouteBase>[
+              StatefulShellRoute(branches: <StatefulShellBranch>[
+                StatefulShellBranch(
+                  defaultLocation: '/b',
+                  navigatorKey: sectionANavigatorKey,
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: '/a',
+                      builder: _mockScreenBuilder,
+                    ),
+                  ],
+                ),
+                StatefulShellBranch(
+                  defaultLocation: '/b',
+                  navigatorKey: sectionBNavigatorKey,
+                  routes: <RouteBase>[
+                    StatefulShellRoute(branches: <StatefulShellBranch>[
+                      StatefulShellBranch(
+                        routes: <RouteBase>[
+                          GoRoute(
+                            path: '/b',
+                            builder: _mockScreenBuilder,
+                          ),
+                        ],
+                      ),
+                    ], builder: _mockShellBuilder),
+                  ],
+                ),
+              ], builder: _mockShellBuilder),
+            ],
+            redirectLimit: 10,
+            topRedirect: (BuildContext context, GoRouterState state) {
+              return null;
+            },
+          );
+        },
+        throwsAssertionError,
+      );
+    });
+
+    test(
+        'does not throw when a branch of a StatefulShellRoute has correctly '
+        'configured defaultLocations', () {
+      final GlobalKey<NavigatorState> root =
+          GlobalKey<NavigatorState>(debugLabel: 'root');
+
+      RouteConfiguration(
+        navigatorKey: root,
+        routes: <RouteBase>[
+          StatefulShellRoute(branches: <StatefulShellBranch>[
+            StatefulShellBranch(
+              routes: <RouteBase>[
+                GoRoute(
+                    path: '/a',
+                    builder: _mockScreenBuilder,
+                    routes: <RouteBase>[
+                      GoRoute(
+                        path: 'detail',
+                        builder: _mockScreenBuilder,
+                      ),
+                    ]),
+              ],
+            ),
+            StatefulShellBranch(
+              defaultLocation: '/b/detail',
+              routes: <RouteBase>[
+                GoRoute(
+                    path: '/b',
+                    builder: _mockScreenBuilder,
+                    routes: <RouteBase>[
+                      GoRoute(
+                        path: 'detail',
+                        builder: _mockScreenBuilder,
+                      ),
+                    ]),
+              ],
+            ),
+            StatefulShellBranch(
+              defaultLocation: '/c/detail',
+              routes: <RouteBase>[
+                StatefulShellRoute(branches: <StatefulShellBranch>[
+                  StatefulShellBranch(
+                    routes: <RouteBase>[
+                      GoRoute(
+                          path: '/c',
+                          builder: _mockScreenBuilder,
+                          routes: <RouteBase>[
+                            GoRoute(
+                              path: 'detail',
+                              builder: _mockScreenBuilder,
+                            ),
+                          ]),
+                    ],
+                  ),
+                  StatefulShellBranch(
+                    defaultLocation: '/d/detail',
+                    routes: <RouteBase>[
+                      GoRoute(
+                          path: '/d',
+                          builder: _mockScreenBuilder,
+                          routes: <RouteBase>[
+                            GoRoute(
+                              path: 'detail',
+                              builder: _mockScreenBuilder,
+                            ),
+                          ]),
+                    ],
+                  ),
+                ], builder: _mockShellBuilder),
+              ],
+            ),
+            StatefulShellBranch(routes: <RouteBase>[
+              ShellRoute(
+                builder: _mockShellBuilder,
+                routes: <RouteBase>[
+                  ShellRoute(
+                    builder: _mockShellBuilder,
+                    routes: <RouteBase>[
+                      GoRoute(
+                        path: '/e',
+                        builder: _mockScreenBuilder,
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ]),
+          ], builder: _mockShellBuilder),
+        ],
+        redirectLimit: 10,
+        topRedirect: (BuildContext context, GoRouterState state) {
+          return null;
+        },
+      );
+    });
+
+    test(
+      'derives the correct defaultLocation for a StatefulShellBranch',
+      () {
+        final StatefulShellBranch branchA;
+        final StatefulShellBranch branchY;
+        final StatefulShellBranch branchB;
+
+        final RouteConfiguration config = RouteConfiguration(
+          navigatorKey: GlobalKey<NavigatorState>(debugLabel: 'root'),
+          routes: <RouteBase>[
+            StatefulShellRoute(
+              builder: (_, __, Widget child) => child,
+              branches: <StatefulShellBranch>[
+                branchA = StatefulShellBranch(routes: <RouteBase>[
+                  GoRoute(
+                    path: '/a',
+                    builder: _mockScreenBuilder,
+                    routes: <RouteBase>[
+                      GoRoute(
+                        path: 'x',
+                        builder: _mockScreenBuilder,
+                        routes: <RouteBase>[
+                          StatefulShellRoute(
+                              builder: (_, __, Widget child) => child,
+                              branches: <StatefulShellBranch>[
+                                branchY =
+                                    StatefulShellBranch(routes: <RouteBase>[
+                                  ShellRoute(
+                                      builder: _mockShellBuilder,
+                                      routes: <RouteBase>[
+                                        GoRoute(
+                                          path: 'y1',
+                                          builder: _mockScreenBuilder,
+                                        ),
+                                        GoRoute(
+                                          path: 'y2',
+                                          builder: _mockScreenBuilder,
+                                        ),
+                                      ])
+                                ])
+                              ]),
+                        ],
+                      ),
+                    ],
+                  ),
+                ]),
+                branchB = StatefulShellBranch(routes: <RouteBase>[
+                  ShellRoute(
+                    builder: _mockShellBuilder,
+                    routes: <RouteBase>[
+                      ShellRoute(
+                        builder: _mockShellBuilder,
+                        routes: <RouteBase>[
+                          GoRoute(
+                            path: '/b1',
+                            builder: _mockScreenBuilder,
+                          ),
+                          GoRoute(
+                            path: '/b2',
+                            builder: _mockScreenBuilder,
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ]),
+              ],
+            ),
+          ],
+          redirectLimit: 10,
+          topRedirect: (BuildContext context, GoRouterState state) {
+            return null;
+          },
+        );
+
+        expect('/a', config.findStatefulShellBranchDefaultLocation(branchA));
+        expect(
+            '/a/x/y1', config.findStatefulShellBranchDefaultLocation(branchY));
+        expect('/b1', config.findStatefulShellBranchDefaultLocation(branchB));
+      },
+    );
+
+    test(
         'throws when there is a GoRoute ancestor with a different parentNavigatorKey',
         () {
       final GlobalKey<NavigatorState> root =

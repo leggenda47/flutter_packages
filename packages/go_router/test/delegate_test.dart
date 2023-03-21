@@ -138,7 +138,7 @@ void main() {
         expect(goRouter.routerDelegate.matches.matches.length, 3);
         expect(
           goRouter.routerDelegate.matches.matches[2].pageKey,
-          const Key('/a-p1'),
+          const Key('/a-p0'),
         );
       },
     );
@@ -158,7 +158,7 @@ void main() {
         expect(goRouter.routerDelegate.matches.matches.length, 3);
         expect(
           goRouter.routerDelegate.matches.matches[2].pageKey,
-          const Key('/c/c2-p1'),
+          const Key('/c/c2-p0'),
         );
       },
     );
@@ -178,7 +178,7 @@ void main() {
         expect(goRouter.routerDelegate.matches.matches.length, 3);
         expect(
           goRouter.routerDelegate.matches.matches[2].pageKey,
-          const Key('/c-p2'),
+          const Key('/c-p1'),
         );
       },
     );
@@ -243,7 +243,7 @@ void main() {
         reason: 'The last match should have been removed',
       );
       expect(
-        (goRouter.routerDelegate.matches.last as ImperativeRouteMatch)
+        (goRouter.routerDelegate.matches.last as ImperativeRouteMatch<Object?>)
             .matches
             .uri
             .toString(),

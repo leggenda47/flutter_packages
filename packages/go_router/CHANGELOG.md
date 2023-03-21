@@ -1,15 +1,14 @@
 ## 6.4.0
 
-- Adds `replace` method to that replaces the current route with a new one and keeps the same page key. This is useful for when you want to update the query params without changing the page key ([#115902]https://github.com/flutter/flutter/issues/115902).
-
-## 6.3.0
-
 - Introduces `StatefulShellRoute` to support using separate
   navigators for child routes as well as preserving state in each navigation tree
   (flutter/flutter#99124).
 - Updates documentation for `pageBuilder` and `builder` fields of `ShellRoute`, to more correctly
   describe the meaning of the child argument in the builder functions.
 - Adds support for restorationId to ShellRoute (and StatefulShellRoute).
+- Supports returning values on pop.
+
+## 6.3.0
 - Aligns Dart and Flutter SDK constraints.
 - Updates compileSdkVersion to 33.
 - Updates example app to iOS 11.

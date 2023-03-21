@@ -228,6 +228,12 @@ class DummyStatefulWidget extends StatefulWidget {
 }
 
 class DummyStatefulWidgetState extends State<DummyStatefulWidget> {
+  int counter = 0;
+
+  void increment() => setState(() {
+        counter++;
+      });
+
   @override
   Widget build(BuildContext context) => Container();
 }
@@ -238,3 +244,8 @@ Future<void> simulateAndroidBackButton(WidgetTester tester) async {
   await tester.binding.defaultBinaryMessenger
       .handlePlatformMessage('flutter/navigation', message, (_) {});
 }
+
+StatefulShellRouteBuilder mockStatefulShellBuilder =
+    (BuildContext context, StatefulShellRouteState state, Widget child) {
+  return child;
+};

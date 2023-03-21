@@ -8,6 +8,9 @@ import 'package:go_router/src/builder.dart';
 import 'package:go_router/src/configuration.dart';
 import 'package:go_router/src/match.dart';
 import 'package:go_router/src/matching.dart';
+import 'package:go_router/src/router.dart';
+
+import 'test_helpers.dart';
 
 void main() {
   group('RouteBuilder', () {
@@ -76,17 +79,13 @@ void main() {
       );
 
       final RouteMatchList matches = RouteMatchList(
-          <RouteMatch>[
-            RouteMatch(
-              route: config.routes.first,
-              subloc: '/',
-              extra: null,
-              error: null,
-              pageKey: const ValueKey<String>('/'),
-            ),
-          ],
-          Uri.parse('/'),
-          <String, String>{});
+        <RouteMatch>[
+          _createRouteMatch(config.routes.first, '/'),
+          _createRouteMatch(config.routes.first.routes.first, '/'),
+        ],
+        Uri.parse('/'),
+        const <String, String>{},
+      );
 
       await tester.pumpWidget(
         _BuilderTestWidget(
@@ -96,6 +95,105 @@ void main() {
       );
 
       expect(find.byType(_DetailsScreen), findsOneWidget);
+    });
+
+    testWidgets('Builds StatefulShellRoute', (WidgetTester tester) async {
+      final GlobalKey<NavigatorState> key =
+          GlobalKey<NavigatorState>(debugLabel: 'key');
+      final RouteConfiguration config = RouteConfiguration(
+        routes: <RouteBase>[
+          StatefulShellRoute(
+            builder: mockStatefulShellBuilder,
+            branches: <StatefulShellBranch>[
+              StatefulShellBranch(navigatorKey: key, routes: <RouteBase>[
+                GoRoute(
+                  path: '/nested',
+                  builder: (BuildContext context, GoRouterState state) {
+                    return _DetailsScreen();
+                  },
+                ),
+              ]),
+            ],
+          ),
+        ],
+        redirectLimit: 10,
+        topRedirect: (_, __) => null,
+        navigatorKey: GlobalKey<NavigatorState>(),
+      );
+
+      final RouteMatchList matches = RouteMatchList(
+          <RouteMatch>[
+            _createRouteMatch(config.routes.first, '/nested'),
+            _createRouteMatch(config.routes.first.routes.first, '/nested'),
+          ],
+          Uri.parse('/nested'),
+          const <String, String>{});
+
+      await tester.pumpWidget(
+        _BuilderTestWidget(
+          routeConfiguration: config,
+          matches: matches,
+        ),
+      );
+
+      expect(find.byType(_DetailsScreen), findsOneWidget);
+      expect(find.byKey(key), findsOneWidget);
+    });
+
+    testWidgets('Builds StatefulShellRoute as a sub-route',
+        (WidgetTester tester) async {
+      final GlobalKey<NavigatorState> key =
+          GlobalKey<NavigatorState>(debugLabel: 'key');
+      late GoRoute root;
+      late StatefulShellRoute shell;
+      late GoRoute nested;
+      final RouteConfiguration config = RouteConfiguration(
+        routes: <RouteBase>[
+          root = GoRoute(
+            path: '/root',
+            builder: (BuildContext context, GoRouterState state) =>
+                const Text('Root'),
+            routes: <RouteBase>[
+              shell = StatefulShellRoute(
+                builder: mockStatefulShellBuilder,
+                branches: <StatefulShellBranch>[
+                  StatefulShellBranch(navigatorKey: key, routes: <RouteBase>[
+                    nested = GoRoute(
+                      path: 'nested',
+                      builder: (BuildContext context, GoRouterState state) {
+                        return _DetailsScreen();
+                      },
+                    ),
+                  ]),
+                ],
+              ),
+            ],
+          )
+        ],
+        redirectLimit: 10,
+        topRedirect: (_, __) => null,
+        navigatorKey: GlobalKey<NavigatorState>(),
+      );
+
+      final RouteMatchList matches = RouteMatchList(
+        <RouteMatch>[
+          _createRouteMatch(root, '/root'),
+          _createRouteMatch(shell, 'nested'),
+          _createRouteMatch(nested, '/root/nested'),
+        ],
+        Uri.parse('/root/nested'),
+        const <String, String>{},
+      );
+
+      await tester.pumpWidget(
+        _BuilderTestWidget(
+          routeConfiguration: config,
+          matches: matches,
+        ),
+      );
+
+      expect(find.byType(_DetailsScreen), findsOneWidget);
+      expect(find.byKey(key), findsOneWidget);
     });
 
     testWidgets('Uses the correct navigatorKey', (WidgetTester tester) async {
@@ -128,7 +226,7 @@ void main() {
             ),
           ],
           Uri.parse('/'),
-          <String, String>{});
+          const <String, String>{});
 
       await tester.pumpWidget(
         _BuilderTestWidget(
@@ -190,7 +288,7 @@ void main() {
             ),
           ],
           Uri.parse('/details'),
-          <String, String>{});
+          const <String, String>{});
 
       await tester.pumpWidget(
         _BuilderTestWidget(
@@ -258,7 +356,7 @@ void main() {
             ),
           ],
           Uri.parse('/a/details'),
-          <String, String>{});
+          const <String, String>{});
 
       await tester.pumpWidget(
         _BuilderTestWidget(
@@ -271,6 +369,102 @@ void main() {
       // offstage (underneath) the DetailsScreen.
       expect(find.byType(_HomeScreen), findsNothing);
       expect(find.byType(_DetailsScreen), findsOneWidget);
+    });
+
+    testWidgets('Uses the correct restorationScopeId for ShellRoute',
+        (WidgetTester tester) async {
+      final GlobalKey<NavigatorState> rootNavigatorKey =
+          GlobalKey<NavigatorState>(debugLabel: 'root');
+      final GlobalKey<NavigatorState> shellNavigatorKey =
+          GlobalKey<NavigatorState>(debugLabel: 'shell');
+      final RouteConfiguration config = RouteConfiguration(
+        navigatorKey: rootNavigatorKey,
+        routes: <RouteBase>[
+          ShellRoute(
+            builder: (BuildContext context, GoRouterState state, Widget child) {
+              return _HomeScreen(child: child);
+            },
+            navigatorKey: shellNavigatorKey,
+            restorationScopeId: 'scope1',
+            routes: <RouteBase>[
+              GoRoute(
+                path: '/a',
+                builder: (BuildContext context, GoRouterState state) {
+                  return _DetailsScreen();
+                },
+              ),
+            ],
+          ),
+        ],
+        redirectLimit: 10,
+        topRedirect: (BuildContext context, GoRouterState state) {
+          return null;
+        },
+      );
+
+      final RouteMatchList matches = RouteMatchList(
+          <RouteMatch>[
+            _createRouteMatch(config.routes.first, ''),
+            _createRouteMatch(config.routes.first.routes.first, '/a'),
+          ],
+          Uri.parse('/b'),
+          const <String, String>{});
+
+      await tester.pumpWidget(
+        _BuilderTestWidget(
+          routeConfiguration: config,
+          matches: matches,
+        ),
+      );
+
+      expect(find.byKey(rootNavigatorKey), findsOneWidget);
+      expect(find.byKey(shellNavigatorKey), findsOneWidget);
+      expect(
+          (shellNavigatorKey.currentWidget as Navigator?)?.restorationScopeId,
+          'scope1');
+    });
+
+    testWidgets('Uses the correct restorationScopeId for StatefulShellRoute',
+        (WidgetTester tester) async {
+      final GlobalKey<NavigatorState> rootNavigatorKey =
+          GlobalKey<NavigatorState>(debugLabel: 'root');
+      final GlobalKey<NavigatorState> shellNavigatorKey =
+          GlobalKey<NavigatorState>(debugLabel: 'shell');
+      final GoRouter goRouter = GoRouter(
+        initialLocation: '/a',
+        navigatorKey: rootNavigatorKey,
+        routes: <RouteBase>[
+          StatefulShellRoute(
+            builder: (BuildContext context, StatefulShellRouteState state,
+                    Widget child) =>
+                _HomeScreen(child: child),
+            branches: <StatefulShellBranch>[
+              StatefulShellBranch(
+                navigatorKey: shellNavigatorKey,
+                restorationScopeId: 'scope1',
+                routes: <RouteBase>[
+                  GoRoute(
+                    path: '/a',
+                    builder: (BuildContext context, GoRouterState state) {
+                      return _DetailsScreen();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(MaterialApp.router(
+        routerConfig: goRouter,
+      ));
+
+      expect(find.byKey(rootNavigatorKey), findsOneWidget);
+      expect(find.byKey(shellNavigatorKey), findsOneWidget);
+      expect(
+          (shellNavigatorKey.currentWidget as Navigator?)?.restorationScopeId,
+          'scope1');
     });
   });
 }
@@ -340,15 +534,26 @@ class _BuilderTestWidget extends StatelessWidget {
       },
       restorationScopeId: null,
       observers: <NavigatorObserver>[],
+      onPopPage: (_, __, ___) => false,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: builder.tryBuild(context, matches, (_, __) => false, false,
+      home: builder.tryBuild(context, matches, false,
           routeConfiguration.navigatorKey, <Page<Object?>, GoRouterState>{}),
       // builder: (context, child) => ,
     );
   }
+}
+
+RouteMatch _createRouteMatch(RouteBase route, String location) {
+  return RouteMatch(
+    route: route,
+    subloc: location,
+    extra: null,
+    error: null,
+    pageKey: ValueKey<String>(location),
+  );
 }

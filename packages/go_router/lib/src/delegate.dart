@@ -165,8 +165,6 @@ class GoRouterDelegate extends RouterDelegate<RouteMatchList>
     if (!route.didPop(result)) {
       return false;
     }
-    final Page<Object?> page = route.settings as Page<Object?>;
-    final RouteMatch? match = builder.getRouteMatchForPage(page);
     assert(match != null);
     if (match is ImperativeRouteMatch) {
       match.complete(result);

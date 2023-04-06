@@ -2,10 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 
 import 'configuration.dart';
 import 'logging.dart';
+import 'matching.dart';
 import 'misc/errors.dart';
 import 'path_utils.dart';
 import 'typedefs.dart';
@@ -25,6 +27,8 @@ class RouteConfiguration {
             _debugVerifyNoDuplicatePathParameter(routes, <String, GoRoute>{})),
         assert(_debugCheckParentNavigatorKeys(
             routes, <GlobalKey<NavigatorState>>[navigatorKey])) {
+    assert(_debugCheckStatefulShellBranchDefaultLocations(
+        routes, RouteMatcher(this)));
     _cacheNameToPath('', routes);
     log.info(_debugKnownRoutes());
   }
@@ -41,7 +45,7 @@ class RouteConfiguration {
               'sub-route path may not start or end with /: $route');
         }
         subRouteIsTopLevel = false;
-      } else if (route is ShellRoute) {
+      } else if (route is ShellRouteBase) {
         subRouteIsTopLevel = isTopLevel;
       }
       _debugCheckPath(route.routes, subRouteIsTopLevel);
@@ -86,6 +90,21 @@ class RouteConfiguration {
           route.routes,
           <GlobalKey<NavigatorState>>[...allowedKeys..add(route.navigatorKey)],
         );
+      } else if (route is StatefulShellRoute) {
+        for (final StatefulShellBranch branch in route.branches) {
+          assert(
+              !allowedKeys.contains(branch.navigatorKey),
+              'StatefulShellBranch must not reuse an ancestor navigatorKey '
+              '(${branch.navigatorKey})');
+
+          _debugCheckParentNavigatorKeys(
+            branch.routes,
+            <GlobalKey<NavigatorState>>[
+              ...allowedKeys,
+              branch.navigatorKey,
+            ],
+          );
+        }
       }
     }
     return true;
@@ -109,6 +128,108 @@ class RouteConfiguration {
       route.pathParams.forEach(usedPathParams.remove);
     }
     return true;
+  }
+
+  // Check to see that the configured initialLocation of StatefulShellBranches
+  // points to a descendant route of the route branch.
+  bool _debugCheckStatefulShellBranchDefaultLocations(
+      List<RouteBase> routes, RouteMatcher matcher) {
+    try {
+      for (final RouteBase route in routes) {
+        if (route is StatefulShellRoute) {
+          for (final StatefulShellBranch branch in route.branches) {
+            if (branch.initialLocation == null) {
+              // Recursively search for the first GoRoute descendant. Will
+              // throw assertion error if not found.
+              findStatefulShellBranchDefaultLocation(branch);
+            } else {
+              final RouteBase initialLocationRoute =
+                  matcher.findMatch(branch.initialLocation!).last.route;
+              final RouteBase? match = branch.routes.firstWhereOrNull(
+                  (RouteBase e) => _debugIsDescendantOrSame(
+                      ancestor: e, route: initialLocationRoute));
+              assert(
+                  match != null,
+                  'The initialLocation (${branch.initialLocation}) of '
+                  'StatefulShellBranch must match a descendant route of the '
+                  'branch');
+            }
+          }
+        }
+        _debugCheckStatefulShellBranchDefaultLocations(route.routes, matcher);
+      }
+    } on MatcherError catch (e) {
+      assert(
+          false,
+          'initialLocation (${e.location}) of StatefulShellBranch must '
+          'be a valid location');
+    }
+    return true;
+  }
+
+  /// Returns an Iterable that traverses the provided routes and their
+  /// sub-routes recursively.
+  static Iterable<RouteBase> routesRecursively(
+      Iterable<RouteBase> routes) sync* {
+    for (final RouteBase route in routes) {
+      yield route;
+      yield* routesRecursively(route.routes);
+    }
+  }
+
+  static GoRoute? _findFirstGoRoute(List<RouteBase> routes) =>
+      routesRecursively(routes).whereType<GoRoute>().firstOrNull;
+
+  /// Tests if a route is a descendant of, or same as, an ancestor route.
+  bool _debugIsDescendantOrSame(
+          {required RouteBase ancestor, required RouteBase route}) =>
+      ancestor == route || routesRecursively(ancestor.routes).contains(route);
+
+  /// Recursively traverses the routes of the provided StatefulShellBranch to
+  /// find the first GoRoute, from which a full path will be derived.
+  String findStatefulShellBranchDefaultLocation(StatefulShellBranch branch) {
+    final GoRoute? route = _findFirstGoRoute(branch.routes);
+    final String? initialLocation =
+        route != null ? _fullPathForRoute(route, '', routes) : null;
+    assert(
+        initialLocation != null,
+        'The initial location of a StatefulShellBranch must be derivable from '
+        'GoRoute descendant');
+    return initialLocation!;
+  }
+
+  /// Returns the effective initial location of a StatefulShellBranch.
+  ///
+  /// If the initial location of the branch is null,
+  /// [findStatefulShellBranchDefaultLocation] is used to calculate the initial
+  /// location.
+  String effectiveInitialBranchLocation(StatefulShellBranch branch) {
+    final String? initialLocation = branch.initialLocation;
+    if (initialLocation != null) {
+      return initialLocation;
+    } else {
+      return findStatefulShellBranchDefaultLocation(branch);
+    }
+  }
+
+  static String? _fullPathForRoute(
+      RouteBase targetRoute, String parentFullpath, List<RouteBase> routes) {
+    for (final RouteBase route in routes) {
+      final String fullPath = (route is GoRoute)
+          ? concatenatePaths(parentFullpath, route.path)
+          : parentFullpath;
+
+      if (route == targetRoute) {
+        return fullPath;
+      } else {
+        final String? subRoutePath =
+            _fullPathForRoute(targetRoute, fullPath, route.routes);
+        if (subRoutePath != null) {
+          return subRoutePath;
+        }
+      }
+    }
+    return null;
   }
 
   /// The list of top level routes used by [GoRouterDelegate].
@@ -215,7 +336,7 @@ class RouteConfiguration {
         if (route.routes.isNotEmpty) {
           _cacheNameToPath(fullPath, route.routes);
         }
-      } else if (route is ShellRoute) {
+      } else if (route is ShellRouteBase) {
         if (route.routes.isNotEmpty) {
           _cacheNameToPath(parentFullPath, route.routes);
         }

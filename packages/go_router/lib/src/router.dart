@@ -142,11 +142,6 @@ class GoRouter extends ChangeNotifier implements RouterConfig<RouteMatchList> {
   GoRouteInformationParser get routeInformationParser =>
       _routeInformationParser;
 
-  /// The route configuration. Used for testing.
-  // TODO(johnpryan): Remove this, integration tests shouldn't need access
-  @visibleForTesting
-  RouteConfiguration get routeConfiguration => _routeConfiguration;
-
   /// Gets the current location.
   // TODO(chunhtai): deprecates this once go_router_builder is migrated to
   // GoRouterState.of.
